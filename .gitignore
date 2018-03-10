@@ -1,0 +1,6 @@
+*.class
+*.aux
+*.log
+*.pdf
+*.synctex.gz
+*.*~
