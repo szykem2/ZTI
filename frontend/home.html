@@ -11,10 +11,18 @@
     <style>
         body {
             background-color: #dedede;
+            height: 100%;
+        }
+        .hidden {
+            visibility: hidden;
+            display:inline;
+        }
+        html {
+            height: 100%;
         }
     </style>
     <script>
-        window.onload = function(e) {init();}
+        window.onload = function(e) {initHome();}
     </script>
 </head>
     <!-- https://stackoverflow.com/questions/22131821/how-can-i-display-a-loading-gif-until-an-entire-html-page-has-been-loaded -->
@@ -22,28 +30,112 @@
     <div class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display:none;z-index:4" id="navbar">
         <button class="w3-bar-item w3-button w3-large w3-green" onclick="w3_close()">Close &times;</button>
         <div class="w3-bar-item w3-bar-block w3-card w3-light-grey" id="projects">
-            <input class="w3-input w3-padding" type="text" placeholder="Search.." id="projectSearch" onkeyup="filterProjects()">
-            <a class="w3-bar-item w3-button" href="#about">About</a>
-            <a class="w3-bar-item w3-button" href="#base">Base</a>
-            <a class="w3-bar-item w3-button" href="#blog">Blog</a>
-            <a class="w3-bar-item w3-button" href="#contact">Contact</a>
-            <a class="w3-bar-item w3-button" href="#custom">Custom</a>
-            <a class="w3-bar-item w3-button" href="#support">Support</a>
-            <a class="w3-bar-item w3-button" href="#tools">Tools</a>
+            
         </div>
     </div>
 
-    <div id="main">
+    <div id="main" style="height: 100%;">
         
         <header class="w3-bar w3-dark-grey">
             <button id="openNav" class="w3-bar-item w3-button w3-teal" onclick="w3_open()">&#9776;</button>
             <a href="index.html" class="w3-bar-item w3-button w3-hover-green">ZTI</a>
             <a href="home.html" class="w3-bar-item w3-button w3-hover-green">HOME</a>
             <button onclick="signout()" class="w3-bar-item w3-button w3-right w3-hover-green">Sign out</button>
-            <div id="logindiv" class="w3-bar-item w3-right">Login</div>
+            <div id="logindiv" class="w3-bar-item w3-right"></div>
+            <button onclick="newProject()" class="w3-bar-item w3-button w3-pale-green w3-border w3-border-green w3-padding w3-right">Create new project</button>
             
             <!--<a href="signin.html" class="w3-bar-item w3-button w3-right w3-hover-green">Sign in</a>-->
         </header> 
         <div id="overlay" class="w3-overlay" onclick="w3_close()" style="cursor:pointer"></div>
+        
+        <div id="projectArea" class="w3-margin w3-display-middle w3-twothird w3-row-padding" style="height: 70%">
+            <div id="ProjectMessage">Choose project from the menu on the left, or create one</div>
+            <div id="hcontainer" class="hidden">
+                <div id="projcontent" class="w3-sand w3-border w3-border-green w3-twothird w3-bar-block w3-card" style="height: 100%"></div>
+                <div id='pusers' class='w3-sand w3-border w3-border-green w3-third w3-bar-block w3-card' style="height: 100%"></div>
+            </div>
+        </div>
+
+        <div id="AddUserModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('AddUserModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                </div>
+        
+                <form class="w3-container" name="loginForm" onsubmit="login()">
+                    <div id="usersToAdd" class="w3-section">
+                    </div>
+                </form>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('AddUserModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="DeleteModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('DeleteModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                </div>
+        
+                <form class="w3-container" name="deleteForm">
+                    <div class="w3-section">
+                        <label><b>Do you really want to delete this project?</b></label>
+                        <label><b>This action cannot be undone.</b></label>
+                        <button class="w3-button w3-block w3-red w3-section w3-padding" type="button" onclick="deleteProject()">Confirm</button>
+                    </div>
+                </form>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('DeleteModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+        
+            </div>
+        </div>
+
+        <div id="CreatWorkItemModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('CreatWorkItemModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                </div>
+        
+                <form class="w3-container" name="deleteForm">
+                    <div id="newWorkItem" class="w3-section">
+                       <!--TODO: add fields to form -->
+                    </div>
+                </form>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('CreatWorkItemModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+        
+            </div>
+        </div>
+
+
+        <div id="ExploreWorkItemsModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('ExploreWorkItemsModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                </div>
+        
+                <form class="w3-container" name="deleteForm">
+                    <div id="workItems" class="w3-section">
+                        <!--TODO: add workitems to form and some sorting/searching functionality-->
+                    </div>
+                </form>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('ExploreWorkItemsModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+        
+            </div>
+        </div>
+
     </div>
 </body>

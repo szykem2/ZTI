@@ -1,0 +1,249 @@
+#%RAML 1.0
+title: "Server-Api"
+baseUri: http://127.0.0.1:9080/
+version: v1
+/users:
+  get:
+    description: Retrieve list of all users
+    headers:
+      Authorization:
+        token <GENERATED_TOKEN>
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [
+                {
+                  "id": 4,
+                  "login": "testLogin3",
+                  "email": "testMail3"
+                }
+              ]
+/users/{userId}:
+    get:
+    description: Retrieve user with given id
+    headers:
+      Authorization:
+        Token <GENERATED_TOKEN>
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                  "id": 2,
+                  "username": "CtestUSerKtestUSer3testUSerXtestUSerW",
+                  "email": ""
+              }
+/users/login:
+  post:
+    description: Endpoint for logging in - as response token is returned
+    body:
+      application/json:
+        example: |
+          {
+            "username" : "testUserName",
+            "password" : "hashedPassword"
+          }
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+              {
+                "token" : <GENERATED_TOKEN>
+              }
+      401:
+
+/users/register:
+  post:
+    description: Registering new user
+    body:
+      application/json:
+        example: |
+          {
+            "id" : 1,
+            "username" : "testUSername",
+            "password" : "hashedPassword",
+            "email" : "testEmail"
+          }
+    responses:
+      200:
+
+/validateLogin:
+  post:
+    description: Validates whether login provided in registration form is not used
+    body:
+      application/json:
+        example: |
+          {
+            "login": "testLogin"
+          }
+    responses:
+      204:
+      406:
+
+/validateEmail:
+  post:
+    description: Validates whether email provided in registration form is not used
+    body:
+      application/json:
+        example: |
+          {
+            "email": "testEmail"
+          }
+    responses:
+      204:
+      406:
+
+/projects: 
+  get:
+    description: Retrieves projects user is authorized to view
+      headers:
+        Authorization:
+          token <GENERATED_TOKEN>
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                [
+                  {
+                    "id" : 1,
+                    "title" : "testPrjectName",
+                    "description" : "testProjectDescription",
+                  },
+                  {
+                    "id" : 2,
+                    "title" : "testPrjectName2",
+                    "description" : "testProjectDescription",
+                  }
+                ]
+
+  post:
+    description: Create a project
+      headers:
+        Authorization:
+          token <GENERATED_TOKEN>
+      body:
+        application/json:
+          example: |
+            {
+              "title": "TestProjectTitle",
+              "description": "Description of the test project"
+            }
+      responses:
+        200:
+
+  delete:
+    description: Delete a project
+      headers:
+        Authorization:
+          token <GENERATED_TOKEN>
+      body:
+        application/json:
+          example: |
+            {
+              "id": <projectID>
+            }
+      responses:
+        204:
+		    404:
+        406:
+
+/projects/{id}/users:
+  get:
+    description: Get list of users without permission to view project with given id
+    headers:
+        Authorization:
+          token <GENERATED_TOKEN>
+      body:
+        application/json:
+          example: |
+            {
+              "id": <projectID>
+            }
+      responses:
+        200:
+          body:
+            application/json:
+              example: |
+                [
+                  {
+                    "id" : 1,
+                    "username" : "testUser",
+                  },
+                  {
+                    "id" : 2,
+                    "username" : "testUser",
+                  }
+                ]
+        406:
+
+  post:
+    description: Add permission to view project for a given user
+  delete:
+    description: Revoke privilege to view project by a given user
+    responses:
+      204:
+
+/projects/{id}/reports:
+  get:
+    description: Generate reports for given project
+    headers:
+      Authorization: token <GENERATED_TOKEN>
+    body:
+      application/json:
+        example: |
+          {
+            "itemid": <itemid>
+          }
+    
+
+/projects/{id}/items/{itemid}/comments:
+  get:
+    description: Retrieve coments for a given item in a given project
+  responses:
+      200:
+        body:
+          application/json:
+            example: |
+              [
+                {
+                  "commentid" : 1,
+                  "username" : "testUser",
+                  "created" : <date_created>,
+                  "content": <content_of_the_comment>
+                },
+                {
+                  "commentid" : 2,
+                  "username" : "testUser3",
+                  "created" : <date_created>,
+                  "content": <content_of_the_comment>
+                }
+              ]
+
+/projects/{id}/items: 
+  get:
+    description: Get list of items assigned to a given project
+  post:
+    description: Create item in a given project area
+  put:
+    description: Update item
+  delete:
+    description: Remove work item
+      headers:
+        Authorization:
+          token <GENERATED_TOKEN>
+      body:
+        application/json:
+          example: |
+            {
+              "id": <projectID>
+              "itemid": <itemid>
+            }
+    responses:
+      204:
+	    404:
+	    406:
