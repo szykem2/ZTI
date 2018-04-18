@@ -29,9 +29,8 @@
 <body>
     <div class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display:none;z-index:4" id="navbar">
         <button class="w3-bar-item w3-button w3-large w3-green" onclick="w3_close()">Close &times;</button>
-        <div class="w3-bar-item w3-bar-block w3-card w3-light-grey" id="projects">
-            
-        </div>
+        <div class="fa fa-spinner w3-spin" id="loadingProject" style="width:30px; height:30px; font-size:30px"></div>
+        <div class="w3-bar-item w3-bar-block w3-card w3-light-grey" id="projects"></div>
     </div>
 
     <div id="main" style="height: 100%;">
@@ -42,7 +41,7 @@
             <a href="home.html" class="w3-bar-item w3-button w3-hover-green">HOME</a>
             <button onclick="signout()" class="w3-bar-item w3-button w3-right w3-hover-green">Sign out</button>
             <div id="logindiv" class="w3-bar-item w3-right"></div>
-            <button onclick="newProject()" class="w3-bar-item w3-button w3-pale-green w3-border w3-border-green w3-padding w3-right">Create new project</button>
+            <button onclick="document.getElementById('CreateProjectModal').style.display='block';" class="w3-bar-item w3-button w3-pale-green w3-border w3-border-green w3-padding w3-right">Create new project</button>
             
             <!--<a href="signin.html" class="w3-bar-item w3-button w3-right w3-hover-green">Sign in</a>-->
         </header> 
@@ -63,9 +62,10 @@
                     <span onclick="document.getElementById('AddUserModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
                 </div>
         
-                <form class="w3-container" name="loginForm" onsubmit="login()">
+                <form class="w3-container" name="AddUserForm">
                     <div id="usersToAdd" class="w3-section">
                     </div>
+                    <div id="AddUserMessage"></div>
                 </form>
         
                 <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
@@ -92,15 +92,14 @@
                 <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
                     <button onclick="document.getElementById('DeleteModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
                 </div>
-        
             </div>
         </div>
 
-        <div id="CreatWorkItemModal" class="w3-modal">
+        <div id="CreateWorkItemModal" class="w3-modal">
             <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
         
                 <div class="w3-center"><br>
-                    <span onclick="document.getElementById('CreatWorkItemModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                    <span onclick="document.getElementById('CreateWorkItemModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
                 </div>
         
                 <form class="w3-container" name="deleteForm">
@@ -110,9 +109,32 @@
                 </form>
         
                 <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
-                    <button onclick="document.getElementById('CreatWorkItemModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                    <button onclick="document.getElementById('CreateWorkItemModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="CreateProjectModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('CreateProjectModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
                 </div>
         
+                <form class="w3-container" name="createProjectForm">
+                    <div id="newProject" class="w3-section">
+                        <label><b>Project name: </b></label>
+                        <input class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter project name" name="projName" required>
+                        <label><b>Description</b></label>
+                        <input class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter project description" name="projDesc" required>
+                        <button class="w3-button w3-block w3-blue w3-section w3-padding" type="button" onclick="createProject()">Create Project</button>
+                        <div id="projectLoading"></div>
+                    </div>
+                </form>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('CreateProjectModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
             </div>
         </div>
 
@@ -133,9 +155,7 @@
                 <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
                     <button onclick="document.getElementById('ExploreWorkItemsModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
                 </div>
-        
             </div>
         </div>
-
     </div>
 </body>

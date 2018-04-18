@@ -41,6 +41,7 @@
                     <input class="w3-input w3-border" type="password" placeholder="Enter Password" name="password" required>
                     <div id="loginError"></div>
                     <button class="w3-button w3-block w3-green w3-section w3-padding" type="button" onclick="login()">Login</button>
+                    <div id="loading"></div>
                 </div>
             </form>
     
@@ -58,7 +59,7 @@
                 <span onclick="document.getElementById('registerbtn').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
             </div>
     
-            <form class="w3-container" name="registerForm" onsubmit="validateAndRegister()">
+            <form class="w3-container" name="registerForm">
                 <div class="w3-section">
                     <label><b>E-mail</b></label>
                     <input class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter Email" name="email" onblur="validateEmail(this.value)" required><div id="loadSymbolEmail"></div>
@@ -67,8 +68,9 @@
                     <label><b>Password</b></label>
                     <input class="w3-input w3-border" type="password" placeholder="Enter Password" name="password" required>
                     <input class="w3-input w3-border" type="password" placeholder="Confirm Password" name="passwordConf" onblur="validatePassword()" required> <div id="loadSymbolPassword"></div>
-                    <button class="w3-button w3-block w3-green w3-section w3-padding" type="submit">Login</button>
+                    <button class="w3-button w3-block w3-green w3-section w3-padding" type="button" id="buttonReg" onclick="validateAndRegister()" disabled>Register</button>
                     <input class="w3-check w3-margin-top" type="checkbox" required> Accept Terms of Use and Privacy Policy
+                    <div id="rloading"></div>
                 </div>
             </form>
     
@@ -76,6 +78,17 @@
                 <button onclick="document.getElementById('registerbtn').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
             </div>
     
+        </div>
+    </div>
+
+    <div id="ErrorModal" class="w3-modal">
+        <div class="w3-modal-content w3-animate-zoom" style="max-width:600px">
+            <div class="w3-container">
+				<span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+                <div id="ErrMessage" class="w3-section">
+
+                </div>
+            </div>
         </div>
     </div>
 
