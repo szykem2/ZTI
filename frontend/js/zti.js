@@ -18,6 +18,7 @@ function init() {
     if(error != null){
         document.getElementById('ErrorModal').style.display='block';
         $('#ErrMessage').html("<p>" + error + "</p>");
+        localStorage.removeItem("error");
     }
 }
 
@@ -32,8 +33,32 @@ function initHome() {
     getProjects();
 }
 
-function validateEmail(email, disp=true) {
+function initItem() {
+    token = localStorage.getItem("token");
     
+    if(token == null) {
+        $(location).attr('href', 'index.html');
+    }
+    uname = localStorage.getItem("login");
+    $("#logindiv").html(uname);
+
+    pusers = JSON.parse(localStorage.getItem("users"));
+    projectid = localStorage.getItem("projectid");
+    project = localStorage.getItem("project");
+    localStorage.removeItem("users");
+    localStorage.removeItem("project");
+    $("#project").val(project);
+    $("#projectid").val(projectid);
+    $("#created").val(new Date());
+    html = ""
+    for(var i=0; i < pusers.length; i++) {
+        html += '<option value="'+ pusers[i].id + '">' + pusers[i].login + '</option>';
+    }
+    $("#owner").html(html);
+    $("#approver").html(html);
+}
+
+function validateEmail(email, disp=true) {
     if(disp) {
         $('#loadSymbolEmail').html('<i class="fa fa-spinner w3-spin" style="font-size:20px"></i>');
     }
@@ -65,7 +90,7 @@ function validateEmail(email, disp=true) {
             }, success: function () {
             },
             error: function(xhr, status, error) {
-                $('#loadSymbolEmail').html("An error occured: " + status + ": " + error);
+                handleError(xhr, status, error, "loadSymbolEmail");
             }
         }).done(function() {
             if(EmailValid && LoginValid && PasswordValid) {
@@ -100,7 +125,7 @@ function validateUser(uname, disp=true) {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            $('#loadSymbolUname').html("An error occured: " + status + ": " + error);
+            handleError(xhr, status, error, "loadSymbolUname");
         }
     }).done(function() {
         if(EmailValid && LoginValid && PasswordValid) {
@@ -157,6 +182,20 @@ function validatePassword() {
     return staus;
 }
 
+function handleError(xhr, status, error, divid) {
+    $('#' + divid).attr('class', 'w3-red w3-center');
+    $('#' + divid).attr("style", "font-size:16px");
+    if (xhr.readyState == 4) {
+        $('#' + divid).html("An error occured: " + xhr.statusCode + ": " + xhr.status);
+    }
+    else if (xhr.readyState == 0) {
+        $('#' + divid).html("Network connection error");
+    }
+    else {
+        $('#' + divid).html("An error occured: " + status + ": " + error);
+    }
+}
+
 function validateAndRegister() {
     $("#rloading").attr("class", "fa fa-spinner w3-spin");
     $("#rloading").attr("style", "width:30px; height:30px; font-size:30px");
@@ -184,7 +223,7 @@ function validateAndRegister() {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            $('#rloading').html("An error occured: " + status + ": " + error);
+            handleError(xhr, status, error, "rloading");
         }
     });
 }
@@ -196,7 +235,7 @@ function signout() {
     $(location).attr('href', 'index.html');
 }
 
-function w3_open() {
+function navOpen() {
     document.getElementById("main").style.marginLeft = "15%";
     document.getElementById("navbar").style.width = "15%";
     document.getElementById("navbar").style.display = "block";
@@ -204,7 +243,7 @@ function w3_open() {
     document.getElementById("overlay").style.display = "block";
   }
 
-function w3_close() {
+function navClose() {
     document.getElementById("main").style.marginLeft = "0%";
     document.getElementById("navbar").style.display = "none";
     document.getElementById("openNav").style.display = "inline-block";
@@ -251,7 +290,7 @@ function login() {
     $.ajax({
         url: url,
         type: "POST",
-        data: JSON.stringify([{"login": uname, "password": pwd}]),
+        data: JSON.stringify({"login": uname, "password": pwd}),
         contentType: "application/json",
         dataType: "json",
         statusCode: {
@@ -270,7 +309,7 @@ function login() {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            $('#loginError').html("An error occured: " + status + ": " + error);
+            handleError(xhr, status, error, "loginError");
         }
     });
 }
@@ -297,16 +336,6 @@ function deleteProject() {
         }
     });
 }
-/*
-headers: {
-            'Authorization':token,
-        },
-success: function () {
-        },
-        error: function(xhr, status, error) { 
-            $('#userlist').html("An error occured: " + status + ": " + error);
-        }
-*/
 
 function findin(value, array) {
     for (var i=0; i < array.length; i++) {
@@ -361,15 +390,13 @@ function addUserToProject(projectid, userid) {
             403: function (response) {
                 $('#AddUserMessage').attr('class', 'w3-red w3-center');
                 $("#AddUserMessage").attr("style", "font-size:16px");
-                $('#AddUserMessage').html("Error error:" + response);
+                $('#AddUserMessage').html("Error:" + response);
                 //TODO: if token expired or not provided return to index.html
             },
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            $('#AddUserMessage').attr('class', 'w3-red w3-center');
-            $("#AddUserMessage").attr("style", "font-size:16px");
-            $('#AddUserMessage').html("An error occured: " + status + ": " + error);
+            handleError(xhr, status, error, "AddUserMessage");
         }
     });
 }
@@ -401,14 +428,12 @@ function getProjectUsers() {
                 $('#userlist').html("could not retrieve list of users assigned to this project");
             },
             403: function (response) {
-                localStorage.setItem("error", "response");
-                localStorage.removeItem("token");
-                $(location).attr('href', 'index.html');
+
             }
         }, success: function () {
         },
-        error: function(xhr, status, error) { 
-            $('#userlist').html("An error occured: " + status + ": " + error);
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "userlist");
         }
     }).done(function(){getAllUsers();});
 }
@@ -437,8 +462,8 @@ function getAllUsers() {
             },
         }, success: function () {
         },
-        error: function(xhr, status, error) { 
-            $('#userlist').html("An error occured: " + status + ": " + error);
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "userlist");
         }
     });
 }
@@ -447,12 +472,21 @@ function getProjectData(hrf) {
     project = hrf.innerHTML;
     $('#hcontainer').attr('class', '');
     $('#ProjectMessage').attr('class', 'hidden');
-    var html = 'Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + '<br /><button onclick="pdeleteProject()" class="w3-btn w3-block w3-red w3-section w3-padding">Remove this project</button>';
+    var html = 'Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + 
+    '<button onclick="newWorkItem()" class="w3-btn w3-block w3-blue w3-section w3-padding">Add new work item</button>' +
+    '<button onclick="pdeleteProject()" class="w3-btn w3-block w3-red w3-section w3-padding">Remove this project</button>';
     $('#projcontent').html(html);
     pusers = [];
     ausers = [];
     getProjectUsers();
-    w3_close();
+    navClose();
+}
+
+function newWorkItem() {
+    localStorage.setItem("project", project);
+    localStorage.setItem("projectid", projects[project].id);
+    localStorage.setItem("users", JSON.stringify(pusers));
+    $(location).attr('href', 'newitem.html');
 }
 
 function getProjects() {
@@ -484,8 +518,8 @@ function getProjects() {
             },
         }, success: function () {
         },
-        error: function(xhr, status, error) { 
-            $('#projects').html("An error occured: " + status + ": " + error);
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "projects");
         }
     });
 }
@@ -520,9 +554,7 @@ function createProject() {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            $('#projectLoading').attr('class', 'w3-red w3-center');
-            $("#projectLoading").attr("style", "font-size:16px");
-            $('#projectLoading').html("An error occured: " + status + ": " + error);
+            handleError(xhr, status, error, "projectLoading");
         }
     });
 }

@@ -17,7 +17,6 @@
         window.onload = function(e) {init();}
     </script>
 </head>
-    <!-- https://stackoverflow.com/questions/22131821/how-can-i-display-a-loading-gif-until-an-entire-html-page-has-been-loaded -->
 <body>
     <header class="w3-bar w3-dark-grey">
         <a href="index.html" class="w3-bar-item w3-button w3-hover-green">ZTI</a>
@@ -84,7 +83,7 @@
     <div id="ErrorModal" class="w3-modal">
         <div class="w3-modal-content w3-animate-zoom" style="max-width:600px">
             <div class="w3-container">
-				<span onclick="document.getElementById('id01').style.display='none'" class="w3-button w3-display-topright">&times;</span>
+				<span onclick="document.getElementById('ErrorModal').style.display='none'" class="w3-button w3-display-topright">&times;</span>
                 <div id="ErrMessage" class="w3-section">
 
                 </div>
