@@ -38,17 +38,20 @@
             <button id="openNav" class="w3-bar-item w3-button w3-teal" onclick="navOpen()">&#9776;</button>
             <a href="index.html" class="w3-bar-item w3-button w3-hover-green">ZTI</a>
             <a href="home.html" class="w3-bar-item w3-button w3-hover-green">HOME</a>
+            <button onclick="requestAccess()" class="w3-bar-item w3-button w3-left w3-hover-green">request access to project</button>
             <button onclick="signout()" class="w3-bar-item w3-button w3-right w3-hover-green">Sign out</button>
             <div id="logindiv" class="w3-bar-item w3-right"></div>
             <button onclick="document.getElementById('CreateProjectModal').style.display='block';" class="w3-bar-item w3-button w3-green w3-padding w3-right">Create new project</button>
         </header> 
         <div id="overlay" class="w3-overlay" onclick="navClose()" style="cursor:pointer"></div>
         
-        <div id="projectArea" class="w3-margin w3-display-middle w3-twothird w3-row-padding" style="height: 70%">
+        <div id="projectArea" class="w3-margin w3-display-middle w3-threequarter" style="height: 300px">
             <div id="ProjectMessage">Choose project from the menu on the left, or create one</div>
-            <div id="hcontainer" class="hidden">
-                <div id="projcontent" class="w3-sand w3-border w3-border-green w3-twothird w3-bar-block w3-card" style="height: 100%"></div>
-                <div id='pusers' class='w3-sand w3-border w3-border-green w3-third w3-bar-block w3-card' style="height: 100%"></div>
+            <div id="hcontainer" class="w3-row-padding" style="height:100%; display: none">
+                <div id="projcontent" class="w3-sand w3-border w3-border-green w3-quarter w3-bar-block w3-card" style="height: 100%"></div>
+                <div id='pusers' class='w3-sand w3-border w3-border-green w3-quarter w3-bar-block w3-card' style="height: 100%"></div>
+                <div id='admins'  class='w3-sand w3-border w3-border-green w3-quarter w3-bar-block w3-card' style="height: 100%"></div>
+                <div id='requestors'  class='w3-sand w3-border w3-border-green w3-quarter w3-bar-block w3-card' style="height: 100%; display: none"></div>
             </div>
         </div>
 
@@ -67,6 +70,23 @@
         
                 <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
                     <button onclick="document.getElementById('AddUserModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="RequestAccessModal" class="w3-modal">
+            <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+        
+                <div class="w3-center"><br>
+                    <span onclick="document.getElementById('RequestAccessModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+                </div>
+        
+                <div id="projectsToRequest" class="w3-section">
+                </div>
+                <div id="requestMessage"></div>
+        
+                <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                    <button onclick="document.getElementById('RequestAccessModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
                 </div>
             </div>
         </div>
@@ -103,7 +123,7 @@
                     <div id="newProject" class="w3-section">
                         <label><b>Project name: </b></label>
                         <input class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter project name" name="projName" required>
-                        <label><b>Description</b></label>
+                        <label><b>Description: </b></label>
                         <input class="w3-input w3-border w3-margin-bottom" type="text" placeholder="Enter project description" name="projDesc" required>
                         <button class="w3-button w3-block w3-blue w3-section w3-padding" type="button" onclick="createProject()">Create Project</button>
                         <div id="projectLoading"></div>

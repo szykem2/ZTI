@@ -324,7 +324,6 @@ function addUser() {
 
 function deleteProject() {
     $(location).attr('href', 'home.html');
-    console.log("delete project " + project);
     $.ajax({
         url: server + "/projects/" + projects[project].id,
         headers: {
@@ -348,7 +347,6 @@ function findin(value, array) {
 
 function deleteUserFromProject(userid) {
     $(location).attr('href', 'home.html');
-    console.log("delete user " + project);
     $.ajax({
         url: server + "/projects/" + projects[project].id + "/users/" + userid,
         headers: {
@@ -403,7 +401,6 @@ function addUserToProject(projectid, userid) {
 
 function getProjectUsers() {
     var url = server + '/projects/' + projects[project].id + '/users';
-    console.log(url);
     $.ajax({
         url: url,
         headers: {
@@ -416,13 +413,13 @@ function getProjectUsers() {
                 html = "";
                 pusers = response;
                 for(var i=0; i < pusers.length; i++) {
-                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey">' + pusers[i].login + "<div id='remUs" + pusers[i].id + "' class='fa fa-close w3-right w3-btn' style='font-size:10px' onclick='deleteUserFromProject("+pusers[i].id+")'";
-                    html += '</div></div></div>';
+                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
+                        pusers[i].login + 
+                        "<div id='remUs" + pusers[i].id + "' class='fa fa-close w3-right w3-btn' style='font-size:10px' \
+                        onclick='deleteUserFromProject("+pusers[i].id+")'</div></div></div>";
                 }
-                console.log(html);
                 html += '<button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addUser('+projects[project].id+')">Add User to this project area</button>';
-                console.log(html);
-                $('#pusers').html(html);
+                $('#pusers').html("Users: <br />" + html);
             },
             401: function (response) {
                 $('#userlist').html("could not retrieve list of users assigned to this project");
@@ -434,6 +431,102 @@ function getProjectUsers() {
         },
         error: function(xhr, status, error) {
             handleError(xhr, status, error, "userlist");
+        }
+    }).done(function(){getAllUsers();});
+}
+
+function getProjectAdmins() {
+    var url = server + '/projects/' + projects[project].id + '/admins';
+    $.ajax({
+        url: url,
+        headers: {
+            'Authorization':token,
+        },
+        type: "GET",
+        dataType: 'json',
+        statusCode: {
+            200: function (response) {
+                html = "";
+                for(var i=0; i < response.length; i++) {
+                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
+                    response[i].login + "</div>";
+                }
+                $('#admins').html("Admins of the project: <br />" + html);
+            },
+            401: function (response) {
+                $('#admins').html("could not retrieve list of admins assigned to this project");
+            },
+            403: function (response) {
+
+            }
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "admins");
+        }
+    }).done(function(){getAllUsers();});
+}
+
+function grantAccess(id) {
+    $.ajax({
+        url: server + "/requests/" + projects[project].id + "/" + id,
+        headers: {
+            'Authorization':token,
+        },
+        type: "POST",
+        contentType: "text/plain",
+        success: function (){
+            getProjectRequestors();
+            getProjectUsers();
+        }
+    });
+}
+
+function declineAccess(id) {
+    $.ajax({
+        url: server + "/requests/" + projects[project].id + "/" + id,
+        headers: {
+            'Authorization':token,
+        },
+        type: "DELETE",
+        success: function (){
+            getProjectRequestors();
+        }
+    });
+}
+
+function getProjectRequestors() {
+    var url = server + '/requests/' + projects[project].id;
+    $.ajax({
+        url: url,
+        headers: {
+            'Authorization':token,
+        },
+        type: "GET",
+        dataType: 'json',
+        statusCode: {
+            200: function (response) {
+                html = "";
+                for(var i=0; i < response.length; i++) {
+                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
+                    response[i].login;
+                    html += "<div id='declineAccess" + response[i].id + "' class='fa fa-close w3-right w3-btn' alt='decline' style='font-size:10px' \
+                        onclick='declineAccess("+response[i].id+")'</div></div>";
+                    html += "<div id='grantAccess" + response[i].id + "' class='fa fa-arrow-right w3-right w3-btn' alt='accept' style='font-size:10px' \
+                        onclick='grantAccess("+response[i].id+")'</div></div></div>";
+                }
+                $('#requestors').html("Requests for access:<br />" + html);
+            },
+            401: function (response) {
+                $('#requestors').html("could not retrieve list of requestors assigned to this project");
+            },
+            403: function (response) {
+
+            }
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "requestors");
         }
     }).done(function(){getAllUsers();});
 }
@@ -452,7 +545,7 @@ function getAllUsers() {
                 var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="userSearch" onkeyup="filterUsers()">'
                 for(var i=0; i < ausers.length; i++) {
                     if(!findin(ausers[i].id, pusers)) {
-                        html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" onclick="addUserToProject('+projects[project].id + "," + ausers[i].id +')">' + ausers[i].login + "</button><br />"; //TODO: change userid with username and add fancy div to look good
+                        html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width: 100%; margin:5px;" onclick="addUserToProject('+projects[project].id + "," + ausers[i].id +')">' + ausers[i].login + "</button><br />";
                     }
                 }
                 $('#usersToAdd').html(searchInput + html);
@@ -470,15 +563,23 @@ function getAllUsers() {
 
 function getProjectData(hrf) {
     project = hrf.innerHTML;
-    $('#hcontainer').attr('class', '');
+    $('#hcontainer').attr('style', 'height:100%');
     $('#ProjectMessage').attr('class', 'hidden');
-    var html = 'Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + 
+    var html = 'Project data: <br />Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + 
     '<button onclick="newWorkItem()" class="w3-btn w3-block w3-blue w3-section w3-padding">Add new work item</button>' +
     '<button onclick="pdeleteProject()" class="w3-btn w3-block w3-red w3-section w3-padding">Remove this project</button>';
     $('#projcontent').html(html);
     pusers = [];
     ausers = [];
     getProjectUsers();
+    getProjectAdmins();
+    if(projects[project].isAdmin) {
+        getProjectRequestors();
+        $('#requestors').attr("style", "height:100%");
+    }
+    else {
+        $('#requestors').attr("style", "height:100%; display: none");
+    }
     navClose();
 }
 
@@ -505,7 +606,7 @@ function getProjects() {
             200: function (response) {
                 var html = "";
                 for(var i = 0 ; i < response.length; i++) {
-                    var item = {"id": response[i].id, "description": response[i].description};
+                    var item = {"id": response[i].id, "description": response[i].description, "isAdmin": response[i].admin};
                     projects[response[i].title] = item;
                     html += beginLink + response[i].title + "</a>";
                 }
@@ -559,51 +660,80 @@ function createProject() {
     });
 }
 
+function showDesc(id) {
+    var divid = "Desc" + id;
+    var x = document.getElementById(divid);
+    if (x.className.indexOf("w3-show") == -1) {
+        x.className += " w3-show";
+    } else {
+        x.className = x.className.replace(" w3-show", "");
+    }
+}
 
-/*
-  $.ajax({url: "demo_test.txt",       
-    success: function(data, textStatus, xhr) {
-        console.log(xhr.status);
-    },
-    complete: function(xhr, textStatus) {
-        console.log(xhr.status);
-    } 
-});*/
+function requestAccessToProject(id, idx) {
 
-/*
+    $("#reqBtn"+idx).attr("class", "fa fa-spinner w3-spin");
+    $("#reqBtn"+idx).attr("style", "width:30px; height:30px; font-size:30px");
 
-$.ajax({
-    //beforeSend: function(request) {
-    //    request.setRequestHeader("Authority", authorizationToken);
-    //},
-    url: server,
-    headers: {
-        'Authorization':'Basic xxxxxxxxxxxxx',
-        'X_CSRF_TOKEN':'xxxxxxxxxxxxxxxxxxxx',
-        'Content-Type':'application/json'
-    },
-   type: "POST",
-   data: dataToSave,
-   statusCode: {
-      200: function (response) {
-         alert('1');
-         AfterSavedAll();
-      },
-      201: function (response) {
-         alert('1');
-         AfterSavedAll();
-      },
-      400: function (response) {
-         alert('1');
-         bootbox.alert('<span style="color:Red;">Error While Saving Outage Entry Please Check</span>', function () { });
-      },
-      404: function (response) {
-         alert('1');
-         bootbox.alert('<span style="color:Red;">Error While Saving Outage Entry Please Check</span>', function () { });
-      }
-   }, success: function () {
-      alert('1');
-   },
-});
+    $.ajax({
+        url: server + "/requests/" + id,
+        type: "POST",
+        headers: {
+            'Authorization':token
+        },
+        contentType: "text/plain",
+        statusCode: {
+            200: function (response) {
+                document.getElementById('RequestAccessModal').style.display='none';
+                $('#requestMessage').attr('class', 'w3-green w3-center');
+                $("#requestMessage").attr("style", "font-size:16px");
+            },
+            403: function (response) {
+                $("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
+                $("#reqBtn"+idx).html("An error occured.");
+                $('#requestMessage').html("Error error:" + response);
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
 
-*/
+function requestAccess() {
+    document.getElementById('RequestAccessModal').style.display='block';
+    $("#requestMessage").attr("class", "fa fa-spinner w3-spin");
+    $("#requestMessage").attr("style", "width:30px; height:30px; font-size:30px");
+
+    $.ajax({
+        url: server + "/requests",
+        type: "GET",
+        headers: {
+            'Authorization':token
+        },
+        statusCode: {
+            200: function (response) {
+                $('#requestMessage').attr('class', 'w3-green w3-center');
+                $("#requestMessage").attr("style", "font-size:16px");
+                html = "";
+                for(var i = 0; i < response.length; i++) {
+                    html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%" onclick=showDesc(' + i +')>' + response[i].title + "</button><br />";
+                    html += '<div id="Desc' + i + '" class="w3-container w3-row w3-hide"><div class="w3-threequarter">\
+                                <p>' + response[i].description + '</p>\
+                            </div><div id="reqbtn' + i + '" class="w3-btn w3-padding-16 w3-quarter w3-green" onclick="requestAccessToProject(' + response[i].id + ',' + i + ')">Request Access</div></div></div>';
+                }
+                $('#projectsToRequest').html(html);
+            },
+            403: function (response) {
+                $('#requestMessage').attr('class', 'w3-red w3-center');
+                $("#requestMessage").attr("style", "font-size:16px");
+                $('#requestMessage').html("Error error:" + response);
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
