@@ -49,13 +49,89 @@ function initItem() {
     localStorage.removeItem("project");
     $("#project").val(project);
     $("#projectid").val(projectid);
-    $("#created").val(new Date());
-    html = ""
+    
+    var d = new Date();
+    var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+    d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+    $("#created").val(datestring);
+    html = "<option value='ua' selected>unassigned</option>";
     for(var i=0; i < pusers.length; i++) {
         html += '<option value="'+ pusers[i].id + '">' + pusers[i].login + '</option>';
     }
     $("#owner").html(html);
     $("#approver").html(html);
+    getItemTypes();
+    getItemStatuses();
+}
+
+function getItemTypes() {
+    $.ajax({
+        url: server + "/items/itemtypes",
+        headers: {
+            'Authorization':token,
+        },
+        type: "GET",
+        dataType: 'json',
+        statusCode: {
+            200: function (response) {
+                html = "";
+                for(var i=0; i < response.length; i++) {
+                    var x = ""
+                    if(response[i].typeid == 1) {
+                        x = "selected";
+                    }
+                    html += "<option value='" + response[i].typeid + "'" + x + ">" + response[i].type + "</option>";
+                    x="";
+                }
+                $('#itemType').html("Users: <br />" + html);
+            },
+            401: function (response) {
+                $('#itemType').html("could not retrieve list of users assigned to this project");
+            },
+            403: function (response) {
+
+            }
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "itemType");
+        }
+    });
+}
+
+function getItemStatuses() {
+    $.ajax({
+        url: server + "/items/itemstatus",
+        headers: {
+            'Authorization':token,
+        },
+        type: "GET",
+        dataType: 'json',
+        statusCode: {
+            200: function (response) {
+                html = "";
+                for(var i=0; i < response.length; i++) {
+                    var x = ""
+                    if(response[i].statusid == 1) {
+                        x = "selected";
+                    }
+                    html += "<option value='" + response[i].statusid + "'" + x + ">" + response[i].status + "</option>";
+                    x = "";
+                }
+                $('#itemStatus').html("Users: <br />" + html);
+            },
+            401: function (response) {
+                $('#itemStatus').html("could not retrieve list of users assigned to this project");
+            },
+            403: function (response) {
+
+            }
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "itemStatus");
+        }
+    });
 }
 
 function validateEmail(email, disp=true) {
@@ -410,7 +486,7 @@ function getProjectUsers() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "";
+                html = "<div style='-y: scroll;'>";
                 pusers = response;
                 for(var i=0; i < pusers.length; i++) {
                     html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
@@ -418,7 +494,7 @@ function getProjectUsers() {
                         "<div id='remUs" + pusers[i].id + "' class='fa fa-close w3-right w3-btn' style='font-size:10px' \
                         onclick='deleteUserFromProject("+pusers[i].id+")'</div></div></div>";
                 }
-                html += '<button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addUser('+projects[project].id+')">Add User to this project area</button>';
+                html += '</div><button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addUser('+projects[project].id+')">Add User to this project area</button>';
                 $('#pusers').html("Users: <br />" + html);
             },
             401: function (response) {
@@ -561,9 +637,52 @@ function getAllUsers() {
     });
 }
 
+function goToItem(id) {
+    console.log(id);
+}
+
+function getProjectItems() {
+    $.ajax({
+        url: server + "/items/" + projects[project].id,
+        headers: {
+            'Authorization':token,
+        },
+        type: "GET",
+        statusCode: {
+            200: function (response) {
+                pitems = response;
+                var html = "<table class='w3-table-all w3-hoverable'>\
+                            <thead>\
+                            <tr class='w3-green'>\
+                            <td> id </td> <td> type </td> <td> title </td> <td> owner </td> <td> created </td> <td> status </td>\
+                            </tr></thead>";
+                //var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="userSearch" onkeyup="filterUsers()">'
+                for(var i=0; i < pitems.length; i++) {
+                    var d = new Date(pitems[i].creationdate);
+                    var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+                    d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+                    var tbl = "<tr onclick='goToItem("+pitems[i].itemid+")' style='cursor:pointer'>\
+                                <td>"+ pitems[i].itemid + "</td> <td>" + pitems[i].itemtype.type + "</td> <td>" + pitems[i].title + "</td>\
+                                <td>" + pitems[i].owner.login + "</td> <td>" + datestring + "</td> <td>" + pitems[i].itemstatus.status + "</td>\
+                               </tr>";
+                    html += tbl;
+                }
+                $('#items').html(html + "</table>");
+            },
+            401: function (response) {
+                $('#items').html("could not retrieve list of user assigned to this project");
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "userlist");
+        }
+    });
+}
+
 function getProjectData(hrf) {
     project = hrf.innerHTML;
-    $('#hcontainer').attr('style', 'height:100%');
+    $('#hcontainer').attr('style', 'height:300px;');
     $('#ProjectMessage').attr('class', 'hidden');
     var html = 'Project data: <br />Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + 
     '<button onclick="newWorkItem()" class="w3-btn w3-block w3-blue w3-section w3-padding">Add new work item</button>' +
@@ -573,12 +692,14 @@ function getProjectData(hrf) {
     ausers = [];
     getProjectUsers();
     getProjectAdmins();
+    getProjectItems();
     if(projects[project].isAdmin) {
         getProjectRequestors();
-        $('#requestors').attr("style", "height:100%");
+        $('#requestors').attr("style", "height:300px; overflow-y: scroll;");
+        $('#items').attr("style", "height:500px; width:100%;");
     }
     else {
-        $('#requestors').attr("style", "height:100%; display: none");
+        $('#requestors').attr("style", "height:300px; display: none; overflow-y: scroll;");
     }
     navClose();
 }
@@ -587,7 +708,7 @@ function newWorkItem() {
     localStorage.setItem("project", project);
     localStorage.setItem("projectid", projects[project].id);
     localStorage.setItem("users", JSON.stringify(pusers));
-    $(location).attr('href', 'newitem.html');
+    $(location).attr('href', 'item.html');
 }
 
 function getProjects() {
@@ -734,6 +855,43 @@ function requestAccess() {
         },
         error: function(xhr, status, error) {
             handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
+
+function addNewItem() {
+    var projectid = document.forms["newItemForm"]["projectid"].value;
+    var itemName = document.forms["newItemForm"]["itemName"].value;
+    var owner = document.forms["newItemForm"]["owner"].value;
+    var approver = document.forms["newItemForm"]["approver"].value;
+    var type = document.forms["newItemForm"]["type"].value;
+    var created = document.forms["newItemForm"]["created"].value;
+    var description = document.forms["newItemForm"]["description"].value;
+    var v = projectid + " " + itemName + " " + owner + " " + approver + " " + type + " " + created + " " + description
+    console.log(v);
+
+    $.ajax({
+        url: server + "/items",
+        type: "POST",
+        headers: {
+            'Authorization':token
+        },
+        data: JSON.stringify({"projectid": projectid, "title": itemName, "owner": owner, "approver": approver, 
+                              "type": type, "creationDate": created, "description": description}),
+        contentType: "application/json",
+        statusCode: {
+            200: function (response) {
+                $(location).attr('href', 'home.html')
+            },
+            403: function (response) {
+                /*$("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
+                $("#reqBtn"+idx).html("An error occured.");
+                $('#requestMessage').html("Error error:" + response);*/
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            //handleError(xhr, status, error, "requestMessage");
         }
     });
 }
