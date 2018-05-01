@@ -42,24 +42,26 @@
             <div id="logindiv" class="w3-bar-item w3-right"></div>
         </header> 
 
-        <div id="item" class="w3-margin" style="width: 100%; height: 300px;">
+        <div id="item" class="w3-margin" style="width: 100%;">
             <form name="newItemForm" class="w3-container">
+                <input id="itemid" name="itemid" class="hidden"></input>
                 <input type="hidden" id="projectid" name="projectid" value=""></input>
                 <div id="hdr" class="w3-margin">
                     <div class="w3-row">
-                        <div id="itemid" class="hidden"></div>
-                        <div id="title" class="w3-threequarter">
-                            <input class="w3-input w3-border w3-margin" type="text" placeholder="Enter item name" name="itemName" required>
+                        <div id="title" class="w3-threequarter w3-row-padding">
+                            <input class="w3-input w3-border w3-margin" type="text" placeholder="Enter item name" id="itemTitle" name="itemName" required>
                         </div>
-                        <div id="btns" class="w3-padding w3-quarter w3-row-padding" style="margin-top: 8px">
+                        <div id="btns" class="w3-padding w3-quarter w3-row-padding w3-right" style="margin-top: 8px">
                             <div class="w3-row">
-                                <div class="w3-half w3-row-padding">
+                                <div class="w3-third w3-row-padding">
                                     <select id="itemType" class="w3-select" name="type" required>
                                     </select>
                                 </div>
-                                <div class="w3-half w3-row-padding">
+                                <div class="w3-third w3-row-padding">
                                     <select id="itemStatus" class="w3-select" name="status" disabled required>
                                     </select>
+                                </div>
+                                <div id ="edt" class="w3-third w3-row-padding">
                                 </div>
                             </div>
                         </div>
@@ -102,12 +104,41 @@
                     <label>
                         <b>Description of the work item:</b>
                     </label>
-                    <textarea cols="40" rows="5" style="height: 100px; width: 98%" type="text" placeholder="Enter description" name="description" required></textarea>
+                    <textarea cols="40" rows="5" style="height: 100px; width: 98%" type="text" placeholder="Enter description" id="textDesc" name="description" required></textarea>
                 </div>
             </form>
-            <button class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addNewItem()">Save work item</button>
+            <button id="savebtn" class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addNewItem()">Save work item</button>
+            <button id="delbtn" class="hidden" style="width: 200px; height: 40px; margin-right: 20px" onclick="document.getElementById('DeleteModal').style.display='block'">Delete this item</button>
+            
+            <div id="newcomment" style="height: 200px">
+                <b>Add new comment:</b>
+                <textarea cols="40" rows="5" style="height: 100px; width: 98%" type="text" placeholder="Enter comment" id="textcmt" name="cmt" required></textarea>
+                <button id="savebtn" class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addComment()">Add comment</button>
+            </div>
+            <b>Comments:</b>
             <div id="comments" class="hidden">
                 
+            </div>
+        </div>
+    </div>
+
+    <div id="DeleteModal" class="w3-modal">
+        <div class="w3-modal-content w3-card-4 w3-animate-zoom" style="max-width:600px">
+    
+            <div class="w3-center"><br>
+                <span onclick="document.getElementById('DeleteModal').style.display='none'" class="w3-button w3-xlarge w3-hover-red w3-display-topright" title="Close Modal">&times;</span>
+            </div>
+    
+            <form class="w3-container" name="deleteForm">
+                <div class="w3-section">
+                    <label><b>Do you really want to delete this work item?</b></label>
+                    <label><b>This action cannot be undone.</b></label>
+                    <button class="w3-button w3-block w3-red w3-section w3-padding" type="button" onclick="deleteItem()">Confirm</button>
+                </div>
+            </form>
+    
+            <div class="w3-container w3-border-top w3-padding-16 w3-light-grey">
+                <button onclick="document.getElementById('DeleteModal').style.display='none'" type="button" class="w3-button w3-red">Cancel</button>
             </div>
         </div>
     </div>

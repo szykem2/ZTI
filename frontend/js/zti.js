@@ -8,6 +8,7 @@ var project = null;
 var LoginValid = false;
 var EmailValid = false;
 var PasswordValid = false;
+var pitems = null;
 
 function init() {
     token = localStorage.getItem("token");
@@ -39,6 +40,34 @@ function initItem() {
     if(token == null) {
         $(location).attr('href', 'index.html');
     }
+
+    var type = localStorage.getItem("itemAction");
+    if(type == null) {
+        $(location).attr('href', 'home.html');
+    }
+    var userid = null;
+    var approverid = null;
+    var item = null;
+    if(type == "view"){
+        item = JSON.parse(localStorage.getItem("item"));
+        console.log(item);
+        userid = item.owner.id;
+        approverid = item.approver.id;
+        $("#itemid").val(item.itemid);
+        $("#itemTitle").val(item.title);
+        $("#itemTitle").prop('disabled', true);
+        $("#textDesc").val(item.description);
+        $("#textDesc").prop('disabled', true);
+        $("#savebtn").prop('disabled', true);
+        if(item.resolutiondate != null) {
+            var d = new Date(item.resolutiondate)
+            var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+            d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+            $("#resolved").val(datestring);
+        }
+        getComments(item.itemid);
+    }
+
     uname = localStorage.getItem("login");
     $("#logindiv").html(uname);
 
@@ -51,20 +80,59 @@ function initItem() {
     $("#projectid").val(projectid);
     
     var d = new Date();
+    if(item != null) {
+        d = new Date(item.creationdate)
+    }
     var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
     d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
     $("#created").val(datestring);
-    html = "<option value='ua' selected>unassigned</option>";
+    var html = "";
+    if (userid == null) {
+        userid = -1;
+        html = "<option value='ua' selected>unassigned</option>";
+    }
+    else {
+        html = "<option value='ua'>unassigned</option>";
+    }
     for(var i=0; i < pusers.length; i++) {
-        html += '<option value="'+ pusers[i].id + '">' + pusers[i].login + '</option>';
+        var sel = "";
+        if(pusers[i].id == userid) {
+            sel = "selected";
+        }
+        html += '<option value="'+ pusers[i].id + '" ' + sel + '>' + pusers[i].login + '</option>';
+        sel = "";
     }
     $("#owner").html(html);
+
+    if (approverid == null) {
+        approverid = -1;
+        html = "<option value='ua' selected>unassigned</option>";
+    }
+    else {
+        html = "<option value='ua'>unassigned</option>";
+    }
+    for(var i=0; i < pusers.length; i++) {
+        var sel = "";
+        if(pusers[i].id == approverid) {
+            sel = "selected";
+        }
+        html += '<option value="'+ pusers[i].id + '" ' + sel + '>' + pusers[i].login + '</option>';
+    }
     $("#approver").html(html);
-    getItemTypes();
-    getItemStatuses();
+    if(type == "view") {
+        $("#owner").prop('disabled', true);
+        $("#approver").prop('disabled', true);
+        $("#itemType").prop('disabled', true);
+        $("#comments").attr('class', "");
+        var html = "<div class='w3-btn w3-teal' onclick='enableEditing()'>EDIT</div>";
+        $("#edt").html(html);
+    }
+    getItemTypes(item);
+    getItemStatuses(item);
 }
 
-function getItemTypes() {
+function getItemTypes(item) {
+    console.log(item);
     $.ajax({
         url: server + "/items/itemtypes",
         headers: {
@@ -77,7 +145,10 @@ function getItemTypes() {
                 html = "";
                 for(var i=0; i < response.length; i++) {
                     var x = ""
-                    if(response[i].typeid == 1) {
+                    if(item == null && response[i].typeid == 1) {
+                        x = "selected";
+                    }
+                    else if(item != null && (response[i].typeid == item.itemtype.typeid)) {
                         x = "selected";
                     }
                     html += "<option value='" + response[i].typeid + "'" + x + ">" + response[i].type + "</option>";
@@ -99,7 +170,7 @@ function getItemTypes() {
     });
 }
 
-function getItemStatuses() {
+function getItemStatuses(item) {
     $.ajax({
         url: server + "/items/itemstatus",
         headers: {
@@ -112,7 +183,10 @@ function getItemStatuses() {
                 html = "";
                 for(var i=0; i < response.length; i++) {
                     var x = ""
-                    if(response[i].statusid == 1) {
+                    if(item == null && response[i].statusid == 1) {
+                        x = "selected";
+                    }
+                    else if(item != null && (response[i].statusid == item.itemstatus.statusid)) {
                         x = "selected";
                     }
                     html += "<option value='" + response[i].statusid + "'" + x + ">" + response[i].status + "</option>";
@@ -638,7 +712,12 @@ function getAllUsers() {
 }
 
 function goToItem(id) {
-    console.log(id);
+    localStorage.setItem("project", project);
+    localStorage.setItem("projectid", projects[project].id);
+    localStorage.setItem("users", JSON.stringify(pusers));
+    localStorage.setItem("itemAction", "view");
+    localStorage.setItem("item", JSON.stringify(pitems[id]));
+    $(location).attr('href', 'item.html');
 }
 
 function getProjectItems() {
@@ -661,7 +740,7 @@ function getProjectItems() {
                     var d = new Date(pitems[i].creationdate);
                     var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
                     d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
-                    var tbl = "<tr onclick='goToItem("+pitems[i].itemid+")' style='cursor:pointer'>\
+                    var tbl = "<tr onclick='goToItem("+i+")' style='cursor:pointer'>\
                                 <td>"+ pitems[i].itemid + "</td> <td>" + pitems[i].itemtype.type + "</td> <td>" + pitems[i].title + "</td>\
                                 <td>" + pitems[i].owner.login + "</td> <td>" + datestring + "</td> <td>" + pitems[i].itemstatus.status + "</td>\
                                </tr>";
@@ -708,6 +787,7 @@ function newWorkItem() {
     localStorage.setItem("project", project);
     localStorage.setItem("projectid", projects[project].id);
     localStorage.setItem("users", JSON.stringify(pusers));
+    localStorage.setItem("itemAction", "new");
     $(location).attr('href', 'item.html');
 }
 
@@ -864,7 +944,7 @@ function addNewItem() {
     var itemName = document.forms["newItemForm"]["itemName"].value;
     var owner = document.forms["newItemForm"]["owner"].value;
     var approver = document.forms["newItemForm"]["approver"].value;
-    var type = document.forms["newItemForm"]["type"].value;
+    var type = document.forms["newItemForm"]["itemType"].value;
     var created = document.forms["newItemForm"]["created"].value;
     var description = document.forms["newItemForm"]["description"].value;
     var v = projectid + " " + itemName + " " + owner + " " + approver + " " + type + " " + created + " " + description
@@ -878,6 +958,146 @@ function addNewItem() {
         },
         data: JSON.stringify({"projectid": projectid, "title": itemName, "owner": owner, "approver": approver, 
                               "type": type, "creationDate": created, "description": description}),
+        contentType: "application/json",
+        statusCode: {
+            200: function (response) {
+                $(location).attr('href', 'home.html')
+            },
+            403: function (response) {
+                /*$("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
+                $("#reqBtn"+idx).html("An error occured.");
+                $('#requestMessage').html("Error error:" + response);*/
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            //handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
+
+function enableEditing() {
+    $("#itemTitle").prop('disabled', false);
+    $("#textDesc").prop('disabled', false);
+    $("#savebtn").prop('disabled', false);
+    $("#owner").prop('disabled', false);
+    $("#approver").prop('disabled', false);
+    $("#itemType").prop('disabled', false);
+    $("#itemStatus").prop('disabled', false);
+    $("#savebtn").attr("onclick", "updateItem()");
+    $("#delbtn").attr("class", "w3-btn w3-red w3-padding w3-right w3-margin-top");
+    $("#newcomment").attr("class", "");
+    $("#newcomment").attr("style", "height: 250px;");
+}
+
+function getComments(id) {
+    $.ajax({
+        url: server + "/items/" + id + "/comments",
+        type: "GET",
+        headers: {
+            'Authorization':token
+        },
+        statusCode: {
+            200: function (response) {
+                html = "";
+                for(var i = 0; i < response.length; i++) {
+                    var d = new Date(response[i].created);
+                    var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+                    d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+                    html += "<div id='cmt" + i + "' class='w3-sand'>\
+                    <div class='w3-row w3-border w3-border-teal'><div class='w3-quarter'><div class='w3-padding w3-margin-left w3-border-bottom w3-border-right w3-border-teal w3-sand'>" + response[i].user.login + "</div>\
+                    <div class='w3-padding w3-margin-left w3-border-right w3-border-teal'>" + datestring + "</div></div>\
+                    <div class='w3-threequarter w3-sand w3-padding'>" + response[i].content + "</div></div></div>";
+                    
+                }
+                $('#comments').html(html);
+            },
+            403: function (response) {
+                $('#requestMessage').attr('class', 'w3-red w3-center');
+                $("#requestMessage").attr("style", "font-size:16px");
+                $('#requestMessage').html("Error error:" + response);
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
+
+function updateItem() {
+    var projectid = document.forms["newItemForm"]["projectid"].value;
+    var itemid = document.forms["newItemForm"]["itemid"].value;
+    var itemName = document.forms["newItemForm"]["itemName"].value;
+    var owner = document.forms["newItemForm"]["owner"].value;
+    var approver = document.forms["newItemForm"]["approver"].value;
+    var type = document.forms["newItemForm"]["itemType"].value;
+    var status = document.forms["newItemForm"]["itemStatus"].value;
+    var resolutiondate = null;
+    var datestring = null;
+    if(status == 3) {
+        var d = new Date();
+        var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+            d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+            $("#resolved").val(datestring);
+    }
+    var created = document.forms["newItemForm"]["created"].value;
+    var description = document.forms["newItemForm"]["description"].value;
+
+    $.ajax({
+        url: server + "/items/" + itemid,
+        type: "PUT",
+        headers: {
+            'Authorization':token
+        },
+        data: JSON.stringify({"projectid": projectid, "title": itemName, "owner": owner, "approver": approver, 
+                              "itemtype": type, "itemstatus": status, "creationdate": created, "description": description, "resolutiondate": datestring}),
+        contentType: "application/json",
+        statusCode: {
+            200: function (response) {
+                $(location).attr('href', 'home.html')
+            },
+            403: function (response) {
+                $("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
+                $("#reqBtn"+idx).html("An error occured.");
+                $('#requestMessage').html("Error error:" + response);
+            },
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            //handleError(xhr, status, error, "requestMessage");
+        }
+    });
+}
+
+function deleteItem() {
+    var itemid = document.forms["newItemForm"]["itemid"].value;
+    console.log(itemid);
+    $.ajax({
+        url: server + "/items/" + itemid,
+        headers: {
+            'Authorization': token,
+        },
+        type: "DELETE",
+        success: function (){
+            $(location).attr("href", "home.html");
+        }
+    });
+}
+
+function addComment() {
+    var itemid = document.forms["newItemForm"]["itemid"].value;
+    var txt = $("#textcmt").val();
+    var d = new Date();
+    var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+    d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
+    $.ajax({
+        url: server + "/items/" + itemid + "/comments",
+        type: "POST",
+        headers: {
+            'Authorization':token
+        },
+        data: JSON.stringify({"content": txt, "created": datestring}),
         contentType: "application/json",
         statusCode: {
             200: function (response) {
