@@ -3,6 +3,7 @@ var server = 'http://localhost:8080/trtrt';
 var username = null;
 var projects = [];
 var pusers = [];
+var admins = [];
 var ausers = null;
 var project = null;
 var LoginValid = false;
@@ -156,11 +157,13 @@ function getItemTypes(item) {
                 }
                 $('#itemType').html("Users: <br />" + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#itemType').html("could not retrieve list of users assigned to this project");
             },
-            403: function (response) {
-
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
             }
         }, success: function () {
         },
@@ -194,11 +197,13 @@ function getItemStatuses(item) {
                 }
                 $('#itemStatus').html("Users: <br />" + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#itemStatus').html("could not retrieve list of users assigned to this project");
             },
-            403: function (response) {
-
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
             }
         }, success: function () {
         },
@@ -430,6 +435,21 @@ function filterUsers() {
     }
 }
 
+function filterAdmins() {
+    var input, filter, ul, li, a, i;
+    input = document.getElementById("adminSearch");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("adminsToAdd");
+    a = div.getElementsByTagName("button");
+    for (i = 0; i < a.length; i++) {
+        if (a[i].innerHTML.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
+        } else {
+            a[i].style.display = "none";
+        }
+    }
+}
+
 function login() {
     $("#loading").attr("class", "fa fa-spinner w3-spin");
     $("#loading").attr("style", "width:30px; height:30px; font-size:30px");
@@ -472,6 +492,71 @@ function addUser() {
     document.getElementById('AddUserModal').style.display='block';
 }
 
+function addAdmin() {
+    var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="adminSearch" onkeyup="filterAdmins()">';
+    var html = "";
+    for(var i=0; i < pusers.length; i++) {
+        if(!findin(pusers[i].id, admins)) {
+            var xx = "";
+            console.log(projects[project]);
+            if(projects[project].isAdmin) {
+                xx ='addAdminToProject('+projects[project].id + "," + pusers[i].id +')';
+            }
+            else {
+                xx="";
+            }
+            html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width: 100%; margin:5px;" onclick="' + xx + '">' + pusers[i].login + "</button><br />";
+            console.log(html);
+        }
+    }
+    $('#adminsToAdd').html(searchInput + html);
+    document.getElementById('AddAdminModal').style.display='block';
+}
+
+function addAdminToProject(pid, userid) {
+    $("#AddAdminMessage").attr("class", "fa fa-spinner w3-spin");
+    $("#AddAdminMessage").attr("style", "width:30px; height:30px; font-size:30px");
+    usr = null;
+    for(var i = 0; i < pusers.length; i++) {
+        if(pusers[i].id == userid) {
+            usr = pusers[i];
+            break;
+        }
+    }
+
+    $.ajax({
+        url: server + "/projects/" + projects[project].id + "/admins",
+        type: "POST",
+        headers: {
+            'Authorization':token
+        },
+        data: JSON.stringify({"email": usr.email, "login": usr.login}),
+        contentType: "application/json",
+        statusCode: {
+            200: function (response) {
+                $('#AddAdminMessage').attr('class', 'w3-green w3-center');
+                $("#AddAdminMessage").attr("style", "font-size:16px");
+                $('#AddAdminMessage').html('You are successfully registered');
+                location.reload();
+            },
+            403: function (response) {
+                $('#AddAdminMessage').attr('class', 'w3-red w3-center');
+                $("#AddAdminMessage").attr("style", "font-size:16px");
+                $('#AddAdminMessage').html("Error:" + response);
+            },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
+        }, success: function () {
+        },
+        error: function(xhr, status, error) {
+            handleError(xhr, status, error, "AddAdminMessage");
+        }
+    });
+}
+
 function deleteProject() {
     $(location).attr('href', 'home.html');
     $.ajax({
@@ -510,8 +595,8 @@ function deleteUserFromProject(userid) {
 }
 
 function addUserToProject(projectid, userid) {
-    $("#projectLoading").attr("class", "fa fa-spinner w3-spin");
-    $("#projectLoading").attr("style", "width:30px; height:30px; font-size:30px");
+    $("#AddUserMessage").attr("class", "fa fa-spinner w3-spin");
+    $("#AddUserMessage").attr("style", "width:30px; height:30px; font-size:30px");
     usr = null;
     for(var i = 0; i < ausers.length; i++) {
         if(ausers[i].id == userid) {
@@ -519,7 +604,7 @@ function addUserToProject(projectid, userid) {
             break;
         }
     }
-
+    console.log(usr);
     $.ajax({
         url: server + "/projects/" + projects[project].id + "/users",
         type: "POST",
@@ -539,8 +624,12 @@ function addUserToProject(projectid, userid) {
                 $('#AddUserMessage').attr('class', 'w3-red w3-center');
                 $("#AddUserMessage").attr("style", "font-size:16px");
                 $('#AddUserMessage').html("Error:" + response);
-                //TODO: if token expired or not provided return to index.html
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -560,22 +649,29 @@ function getProjectUsers() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "<div style='-y: scroll;'>";
+                html = "<div style='overflow-y: scroll;'>";
                 pusers = response;
                 for(var i=0; i < pusers.length; i++) {
-                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
-                        pusers[i].login + 
-                        "<div id='remUs" + pusers[i].id + "' class='fa fa-close w3-right w3-btn' style='font-size:10px' \
-                        onclick='deleteUserFromProject("+pusers[i].id+")'</div></div></div>";
+                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + pusers[i].login;
+                    console.log(projects[project]);
+                    if(projects[project].isAdmin) {
+                        console.log("tt");
+                        html += "<div id='remUs" + pusers[i].id + "' class='fa fa-close w3-right w3-btn' style='font-size:10px' onclick='deleteUserFromProject("+pusers[i].id+")' </div></div>";
+                    }
+                    html += "</div>";
                 }
-                html += '</div><button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addUser('+projects[project].id+')">Add User to this project area</button>';
+                if(projects[project].isAdmin){
+                    html += '</div><button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addUser('+projects[project].id+')">Add User to this project area</button>';
+                }
                 $('#pusers').html("Users: <br />" + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#userlist').html("could not retrieve list of users assigned to this project");
             },
-            403: function (response) {
-
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
             }
         }, success: function () {
         },
@@ -596,18 +692,24 @@ function getProjectAdmins() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "";
+                html = "<div style='overflow-y: scroll'>";
+                admins = response;
                 for(var i=0; i < response.length; i++) {
                     html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
                     response[i].login + "</div>";
                 }
+                if(projects[project].isAdmin){
+                    html += '</div></div><button class="w3-btn w3-block w3-green w3-section w3-padding" type="button" onclick="addAdmin('+projects[project].id+')">Add Admin to this project area</button>';
+                }
                 $('#admins').html("Admins of the project: <br />" + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#admins').html("could not retrieve list of admins assigned to this project");
             },
-            403: function (response) {
-
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
             }
         }, success: function () {
         },
@@ -667,11 +769,13 @@ function getProjectRequestors() {
                 }
                 $('#requestors').html("Requests for access:<br />" + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#requestors').html("could not retrieve list of requestors assigned to this project");
             },
-            403: function (response) {
-
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
             }
         }, success: function () {
         },
@@ -695,14 +799,26 @@ function getAllUsers() {
                 var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="userSearch" onkeyup="filterUsers()">'
                 for(var i=0; i < ausers.length; i++) {
                     if(!findin(ausers[i].id, pusers)) {
-                        html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width: 100%; margin:5px;" onclick="addUserToProject('+projects[project].id + "," + ausers[i].id +')">' + ausers[i].login + "</button><br />";
+                        var xx = ""
+                        if(projects[project].isAdmin) {
+                            xx ='addUserToProject('+projects[project].id + "," + ausers[i].id +')';
+                        }
+                        else {
+                            xx="";
+                        }
+                        html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width: 100%; margin:5px;" onclick="' + xx + '">' + ausers[i].login + "</button><br />";
                     }
                 }
                 $('#usersToAdd').html(searchInput + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#userlist').html("could not retrieve list of user assigned to this project");
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -748,9 +864,14 @@ function getProjectItems() {
                 }
                 $('#items').html(html + "</table>");
             },
-            401: function (response) {
+            403: function (response) {
                 $('#items').html("could not retrieve list of user assigned to this project");
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -764,8 +885,10 @@ function getProjectData(hrf) {
     $('#hcontainer').attr('style', 'height:300px;');
     $('#ProjectMessage').attr('class', 'hidden');
     var html = 'Project data: <br />Project #' + projects[project].id + " Title: " + project + "<br />" + "Description: " + projects[project].description + 
-    '<button onclick="newWorkItem()" class="w3-btn w3-block w3-blue w3-section w3-padding">Add new work item</button>' +
-    '<button onclick="pdeleteProject()" class="w3-btn w3-block w3-red w3-section w3-padding">Remove this project</button>';
+    '<button onclick="newWorkItem()" class="w3-btn w3-block w3-blue w3-section w3-padding">Add new work item</button>';
+    if(projects[project].isAdmin) {
+        html += '<button onclick="pdeleteProject()" class="w3-btn w3-block w3-red w3-section w3-padding">Remove this project</button>';
+    }
     $('#projcontent').html(html);
     pusers = [];
     ausers = [];
@@ -815,9 +938,14 @@ function getProjects() {
                 $('#loadingProject').attr('style', '');
                 $('#projects').html(searchInput + html);
             },
-            401: function (response) {
+            403: function (response) {
                 $('#projects').html("could not retrieve list of projects");
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -851,8 +979,12 @@ function createProject() {
                 $('#projectLoading').attr('class', 'w3-red w3-center');
                 $("#projectLoading").attr("style", "font-size:16px");
                 $('#projectLoading').html("Error error:" + response);
-                //TODO: if token expired or not provided return to index.html
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -894,6 +1026,11 @@ function requestAccessToProject(id, idx) {
                 $("#reqBtn"+idx).html("An error occured.");
                 $('#requestMessage').html("Error error:" + response);
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -931,6 +1068,11 @@ function requestAccess() {
                 $("#requestMessage").attr("style", "font-size:16px");
                 $('#requestMessage').html("Error error:" + response);
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -968,6 +1110,11 @@ function addNewItem() {
                 $("#reqBtn"+idx).html("An error occured.");
                 $('#requestMessage').html("Error error:" + response);*/
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -1017,6 +1164,11 @@ function getComments(id) {
                 $("#requestMessage").attr("style", "font-size:16px");
                 $('#requestMessage').html("Error error:" + response);
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -1062,6 +1214,11 @@ function updateItem() {
                 $("#reqBtn"+idx).html("An error occured.");
                 $('#requestMessage').html("Error error:" + response);
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
@@ -1108,6 +1265,11 @@ function addComment() {
                 $("#reqBtn"+idx).html("An error occured.");
                 $('#requestMessage').html("Error error:" + response);*/
             },
+            401: function (response) {
+                localStorage.clear();
+                localStorage.setItem("error", response.status + ": " + response.responseText);
+                $(location).attr("href", "index.html");
+            }
         }, success: function () {
         },
         error: function(xhr, status, error) {
