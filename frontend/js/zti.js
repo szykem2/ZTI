@@ -35,6 +35,13 @@ function initHome() {
     getProjects();
 }
 
+function hash(password) {
+    var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
+    hashObj.update(password);
+    var hsh = hashObj.getHash("HEX");
+    return hsh;
+}
+
 function initItem() {
     token = localStorage.getItem("token");
     
@@ -51,7 +58,6 @@ function initItem() {
     var item = null;
     if(type == "view"){
         item = JSON.parse(localStorage.getItem("item"));
-        console.log(item);
         userid = item.owner.id;
         approverid = item.approver.id;
         $("#itemid").val(item.itemid);
@@ -88,7 +94,7 @@ function initItem() {
     d.getHours() + ":" + d.getMinutes() + ":" + d.getSeconds();
     $("#created").val(datestring);
     var html = "";
-    if (userid == null) {
+    if (userid == null || userid == -1) {
         userid = -1;
         html = "<option value='ua' selected>unassigned</option>";
     }
@@ -105,7 +111,7 @@ function initItem() {
     }
     $("#owner").html(html);
 
-    if (approverid == null) {
+    if (approverid == null || approverid == -1) {
         approverid = -1;
         html = "<option value='ua' selected>unassigned</option>";
     }
@@ -125,7 +131,7 @@ function initItem() {
         $("#approver").prop('disabled', true);
         $("#itemType").prop('disabled', true);
         $("#comments").attr('class', "");
-        var html = "<div class='w3-btn w3-teal' onclick='enableEditing()'>EDIT</div>";
+        var html = "<div id='editbtn' class='w3-btn w3-teal' onclick='enableEditing()'>EDIT</div>";
         $("#edt").html(html);
     }
     getItemTypes(item);
@@ -217,9 +223,8 @@ function validateEmail(email, disp=true) {
     if(disp) {
         $('#loadSymbolEmail').html('<i class="fa fa-spinner w3-spin" style="font-size:20px"></i>');
     }
-    var re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    var re = /^[\w!#$%&'*+/=?`{|}~^-]+(?:\.[\w!#$%&'*+/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}$/;
     var valid = re.test(email);
-
     if(!valid) {
         $('#loadSymbolEmail').attr('class', 'w3-red w3-center');
         $('#loadSymbolEmail').html('Email structure is not correct');
@@ -260,6 +265,11 @@ function validateEmail(email, disp=true) {
 function validateUser(uname, disp=true) {
     if(disp) {
         $('#loadSymbolUname').html('<i class="fa fa-spinner w3-spin" style="font-size:20px"></i>');
+    }
+    if(uname.length < 5 || uname.length > 20) {
+        $('#loadSymbolUname').attr('class', 'w3-red w3-center');
+        $('#loadSymbolUname').html("Username should be between 5 and 20 characters");
+        return;
     }
     $.ajax({
         url: server + "/validateLogin",
@@ -355,14 +365,15 @@ function validateAndRegister() {
     $("#rloading").attr("class", "fa fa-spinner w3-spin");
     $("#rloading").attr("style", "width:30px; height:30px; font-size:30px");
     var uname = document.forms["registerForm"]["username"].value;
-    var pwd = document.forms["registerForm"]["password"].value;
-    var pwd2 = document.forms["registerForm"]["passwordConf"].value;
+    var pwd = hash(document.forms["registerForm"]["password"].value);
     var email = document.forms["registerForm"]["email"].value;
-
+    if(!validatePassword()) {
+        return;
+    }
     $.ajax({
         url: server + "/users/register",
         type: "POST",
-        data: JSON.stringify({"login": uname, "email": email, "password": pwd, "login": uname, "login": uname}),
+        data: JSON.stringify({"login": uname, "email": email, "password": pwd}),
         contentType: "application/json",
         statusCode: {
             200: function (response) {
@@ -454,9 +465,9 @@ function login() {
     $("#loading").attr("class", "fa fa-spinner w3-spin");
     $("#loading").attr("style", "width:30px; height:30px; font-size:30px");
     var uname = document.forms["loginForm"]["username"].value;
-    var pwd = document.forms["loginForm"]["password"].value;
+    var pwd = hash(document.forms["loginForm"]["password"].value);
     var url = server + "/users/login";
-    //TODO: hash the password
+
     $.ajax({
         url: url,
         type: "POST",
@@ -836,6 +847,25 @@ function goToItem(id) {
     $(location).attr('href', 'item.html');
 }
 
+function filterWorkItems() {
+    var input, filter, table, tr, td, i;
+    input = document.getElementById("tblsearch");
+    filter = input.value.toUpperCase();
+    table = document.getElementById("itemtbl");
+    tr = table.getElementsByTagName("tr");
+    for (i = 1; i < tr.length; i++) {
+        tds = tr[i].getElementsByTagName("td");
+        if (tds) {
+            tr[i].style.display = "none";
+            for(var j = 0; j < tds.length; j++) {
+                if (tds[j].innerHTML.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                }
+            }
+        }
+    }
+}
+
 function getProjectItems() {
     $.ajax({
         url: server + "/items/" + projects[project].id,
@@ -846,12 +876,12 @@ function getProjectItems() {
         statusCode: {
             200: function (response) {
                 pitems = response;
-                var html = "<table class='w3-table-all w3-hoverable'>\
+                var html = "<input type='text' id='tblsearch' onkeyup='filterWorkItems()' placeholder='Search for work items..'>\
+                            <table id='itemtbl' class='w3-table-all w3-hoverable'>\
                             <thead>\
                             <tr class='w3-green'>\
                             <td> id </td> <td> type </td> <td> title </td> <td> owner </td> <td> created </td> <td> status </td>\
                             </tr></thead>";
-                //var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="userSearch" onkeyup="filterUsers()">'
                 for(var i=0; i < pitems.length; i++) {
                     var d = new Date(pitems[i].creationdate);
                     var datestring = d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
@@ -1124,6 +1154,7 @@ function addNewItem() {
 }
 
 function enableEditing() {
+    $("#editbtn").attr('style', 'display: none');
     $("#itemTitle").prop('disabled', false);
     $("#textDesc").prop('disabled', false);
     $("#savebtn").prop('disabled', false);
@@ -1178,6 +1209,8 @@ function getComments(id) {
 }
 
 function updateItem() {
+    $("#savebtn").prop('disabled', true);
+    $("#delbtn").prop('disabled', true);
     var projectid = document.forms["newItemForm"]["projectid"].value;
     var itemid = document.forms["newItemForm"]["itemid"].value;
     var itemName = document.forms["newItemForm"]["itemName"].value;

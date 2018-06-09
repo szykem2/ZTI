@@ -5,6 +5,7 @@
     <title> ZTI-projekt </title>
     <meta charset="utf-8" >
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsSHA/2.0.2/sha.js"></script>
     <script src="js/zti.js"></script>
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css"> 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -25,6 +26,17 @@
             overflow-x: hidden;
         }
         thead, tbody {width: 100%;}
+
+        #tblsearch {
+            background-image: url('https://www.w3schools.com/css/searchicon.png');
+            background-position: 10px 12px;
+            background-repeat: no-repeat;
+            width: 100%;
+            font-size: 16px;
+            padding: 12px 20px 12px 40px;
+            border: 1px solid #ddd;
+            margin-bottom: 12px;
+        }
     </style>
     <script>
         window.onload = function(e) {initHome();}
@@ -61,7 +73,7 @@
                     <div id='requestors'  class='w3-pale-yellow w3-quarter w3-bar-block w3-card' style="height: 300px; overflow-y: scroll; display: none"></div>
                 </div>
 
-                <div id="items" class="w3-margin" style="height: 500px; width: 100%; display:none">
+                <div id="items" class="w3-margin" style="height: 500px; width: 100%; overflow-y:scroll">
 
                 </div>
             </div>
@@ -171,8 +183,4 @@
             
         </div>
     </div>
-
-    <footer class="w3-bar w3-display-bottommiddle w3-black w3-bottom">
-        Copyright &copy; 2018 SK
-    </footer> 
 </body>
