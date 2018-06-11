@@ -1,16 +1,19 @@
-var token = null;
-var server = 'http://localhost:8080/trtrt';
-var username = null;
-var projects = [];
-var pusers = [];
-var admins = [];
-var ausers = null;
-var project = null;
-var LoginValid = false;
-var EmailValid = false;
-var PasswordValid = false;
-var pitems = null;
+﻿var token = null; //token autoryzacyjny
+var server = 'http://localhost:8080/trtrt'; //adres serwera z projektu
+var username = null; //nazwa użytkownika
+var projects = []; //tablica projektów
+var pusers = []; //tablica użytkownikó
+var admins = []; //tablica administratorów
+var ausers = null; //użytkownicy
+var project = null; //projekty
+var LoginValid = false; //flaga czy login jest poprawny
+var EmailValid = false; //flaga czy email jest poprawny
+var PasswordValid = false; //flaga czy hasło jest poprawne
+var pitems = null; //elementy
 
+/**
+ * Funkcja inicjalizująca stronę index.html
+ */
 function init() {
     token = localStorage.getItem("token");
     if(token != null) {
@@ -24,6 +27,9 @@ function init() {
     }
 }
 
+/**
+ * Funkcja inicjalizująca stronę home.html
+ */
 function initHome() {
     token = localStorage.getItem("token");
     
@@ -35,6 +41,10 @@ function initHome() {
     getProjects();
 }
 
+/**
+ * Funkcja hashująca hasło
+ * @param {string} password hasło 
+ */
 function hash(password) {
     var hashObj = new jsSHA("SHA-512", "TEXT", {numRounds: 1});
     hashObj.update(password);
@@ -42,9 +52,11 @@ function hash(password) {
     return hsh;
 }
 
+/**
+ * Funkcja inicjalizująca stronę item.html
+ */
 function initItem() {
     token = localStorage.getItem("token");
-    
     if(token == null) {
         $(location).attr('href', 'index.html');
     }
@@ -56,7 +68,7 @@ function initItem() {
     var userid = null;
     var approverid = null;
     var item = null;
-    if(type == "view"){
+    if(type == "view") {
         item = JSON.parse(localStorage.getItem("item"));
         userid = item.owner.id;
         approverid = item.approver.id;
@@ -73,6 +85,9 @@ function initItem() {
             $("#resolved").val(datestring);
         }
         getComments(item.itemid);
+    }
+    else {
+        $("#commentSection").attr('class', 'hidden');
     }
 
     uname = localStorage.getItem("login");
@@ -138,8 +153,11 @@ function initItem() {
     getItemStatuses(item);
 }
 
+/**
+ * Funkcja pobierająca typy elementów
+ * @param {JSON} item element pracy
+ */
 function getItemTypes(item) {
-    console.log(item);
     $.ajax({
         url: server + "/items/itemtypes",
         headers: {
@@ -179,6 +197,10 @@ function getItemTypes(item) {
     });
 }
 
+/**
+ * Funkcja pobierająca statusy elementów
+ * @param {JSON} item element pracy
+ */
 function getItemStatuses(item) {
     $.ajax({
         url: server + "/items/itemstatus",
@@ -219,6 +241,11 @@ function getItemStatuses(item) {
     });
 }
 
+/**
+ * Funkcja walidująca podany przez użytkownika adres email
+ * @param {string} email adres email
+ * @param {bool} disp flaga mówiąca o tym czy wyświetlić element na stronie 
+ */
 function validateEmail(email, disp=true) {
     if(disp) {
         $('#loadSymbolEmail').html('<i class="fa fa-spinner w3-spin" style="font-size:20px"></i>');
@@ -258,10 +285,14 @@ function validateEmail(email, disp=true) {
             }
         });
     }
-
     return valid;
 }
 
+/**
+ * Funkcja validująca sprawdzanie nazwy użytkownika
+ * @param {string} uname podana nazwa użytkownika
+ * @param {bool} disp flaga mówiąca o tym czy wyświetlić element na stronie 
+ */
 function validateUser(uname, disp=true) {
     if(disp) {
         $('#loadSymbolUname').html('<i class="fa fa-spinner w3-spin" style="font-size:20px"></i>');
@@ -300,6 +331,9 @@ function validateUser(uname, disp=true) {
     
 }
 
+/**
+ * Funkcja walidująca podane hasła
+ */
 function validatePassword() {
     var pwd = document.forms["registerForm"]["password"].value;
     var pwd2 = document.forms["registerForm"]["passwordConf"].value;
@@ -344,9 +378,16 @@ function validatePassword() {
     if(EmailValid && LoginValid && PasswordValid) {
         $('#buttonReg').attr("disabled", false);
     }
-    return staus;
+    return status;
 }
 
+/**
+ * Funkcja obsługująca błędy
+ * @param {XmlHttpResponse} xhr obiekt XHR
+ * @param {string} status status żądania
+ * @param {string} error wiadomość błędu
+ * @param {string} divid id elementu o tagu div
+ */
 function handleError(xhr, status, error, divid) {
     $('#' + divid).attr('class', 'w3-red w3-center');
     $('#' + divid).attr("style", "font-size:16px");
@@ -361,9 +402,14 @@ function handleError(xhr, status, error, divid) {
     }
 }
 
+/**
+ * Funkcja przeprowadzająca walidację oraz wysyłająca żądanie do serwera
+ */
 function validateAndRegister() {
     $("#rloading").attr("class", "fa fa-spinner w3-spin");
     $("#rloading").attr("style", "width:30px; height:30px; font-size:30px");
+    $("#buttonReg").prop("disabled", true);
+    
     var uname = document.forms["registerForm"]["username"].value;
     var pwd = hash(document.forms["registerForm"]["password"].value);
     var email = document.forms["registerForm"]["email"].value;
@@ -380,11 +426,13 @@ function validateAndRegister() {
                 $('#rloading').attr('class', 'w3-green w3-center');
                 $("#rloading").attr("style", "font-size:16px");
                 $('#rloading').html('You are successfully registered');
+                $("#buttonReg").prop("disabled", false);
             },
             409: function (response) {
                 $('#rloading').attr('class', 'w3-red w3-center');
                 $("#rloading").attr("style", "font-size:16px");
                 $('#rloading').html("Registration error:"+response);
+                $("#buttonReg").prop("disabled", false);
             },
         }, success: function () {
         },
@@ -394,6 +442,9 @@ function validateAndRegister() {
     });
 }
 
+/**
+ * Funkjca do wylogowania
+ */
 function signout() {
     token = null;
     localStorage.removeItem("token");
@@ -401,14 +452,20 @@ function signout() {
     $(location).attr('href', 'index.html');
 }
 
+/**
+ * Funkcja otwierająca pasek nawigacyjny
+ */
 function navOpen() {
     document.getElementById("main").style.marginLeft = "15%";
     document.getElementById("navbar").style.width = "15%";
     document.getElementById("navbar").style.display = "block";
     document.getElementById("openNav").style.display = 'none';
     document.getElementById("overlay").style.display = "block";
-  }
+}
 
+/**
+ * Funkcja zamykająca pasek nawigacyjny
+ */
 function navClose() {
     document.getElementById("main").style.marginLeft = "0%";
     document.getElementById("navbar").style.display = "none";
@@ -416,6 +473,9 @@ function navClose() {
     document.getElementById("overlay").style.display = "none";
   }
 
+/**
+ * Funkcja filtrująca projekty w pasku nawigacyjnym
+ */
 function filterProjects() {
     var input, filter, ul, li, a, i;
     input = document.getElementById("projectSearch");
@@ -431,6 +491,29 @@ function filterProjects() {
     }
 }
 
+/**
+ * Funkcja filtrująca projekty przy proszeniu o dostęp
+ */
+function filterProjectsRequests() {
+    var input, filter, ul, li, a, i;
+    input = document.getElementById("SearchReq");
+    filter = input.value.toUpperCase();
+    div = document.getElementById("prReq");
+    a = div.getElementsByTagName("button");
+    console.log(a);
+    for (i = 0; i < a.length; i++) {
+        if (a[i].innerHTML.toUpperCase().indexOf(filter) > -1) {
+            a[i].style.display = "";
+        } else {
+            document.getElementById("Desc" + i).style.display = "none";
+            a[i].style.display = "none";
+        }
+    }
+}
+
+/**
+ * Funkcja filtrująca użytkowników przy dodawaniu użytkownika
+ */
 function filterUsers() {
     var input, filter, ul, li, a, i;
     input = document.getElementById("userSearch");
@@ -446,6 +529,9 @@ function filterUsers() {
     }
 }
 
+/**
+ * Funkcja filtrująca użytkowników przy dodawaniu administratora
+ */
 function filterAdmins() {
     var input, filter, ul, li, a, i;
     input = document.getElementById("adminSearch");
@@ -461,6 +547,9 @@ function filterAdmins() {
     }
 }
 
+/**
+ * Funkcja wysyłająca rządanie o uwierzytelnianie
+ */
 function login() {
     $("#loading").attr("class", "fa fa-spinner w3-spin");
     $("#loading").attr("style", "width:30px; height:30px; font-size:30px");
@@ -495,14 +584,23 @@ function login() {
     });
 }
 
+/**
+ * Funkcja otwierająca okno usuwania projektu
+ */
 function pdeleteProject() {
     document.getElementById('DeleteModal').style.display='block';
 }
 
+/**
+ * Funkcja otwierająca okno dodawania użytkownika
+ */
 function addUser() {
     document.getElementById('AddUserModal').style.display='block';
 }
 
+/**
+ * Fukcja wyświetlająca użytkowników, których można dodać jako administratorów
+ */
 function addAdmin() {
     var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="adminSearch" onkeyup="filterAdmins()">';
     var html = "";
@@ -524,6 +622,11 @@ function addAdmin() {
     document.getElementById('AddAdminModal').style.display='block';
 }
 
+/**
+ * Funkcja dodająca administratora do projektu
+ * @param {int} pid identyfikator projektu
+ * @param {int} userid identyfikator użytkownika
+ */
 function addAdminToProject(pid, userid) {
     $("#AddAdminMessage").attr("class", "fa fa-spinner w3-spin");
     $("#AddAdminMessage").attr("style", "width:30px; height:30px; font-size:30px");
@@ -568,6 +671,9 @@ function addAdminToProject(pid, userid) {
     });
 }
 
+/**
+ * Funkcja usuwająca projekt
+ */
 function deleteProject() {
     $(location).attr('href', 'home.html');
     $.ajax({
@@ -582,6 +688,11 @@ function deleteProject() {
     });
 }
 
+/**
+ * Funkcja sprawdzająca czy w tablicy znajduje się obiekt o podanym id
+ * @param {int} value identyfikator
+ * @param {Array} array tablica obiektów JSON
+ */
 function findin(value, array) {
     for (var i=0; i < array.length; i++) {
         if (array[i].id == value) {
@@ -591,6 +702,10 @@ function findin(value, array) {
     return false;
 }
 
+/**
+ * Funkcja usuwająca użytkownika z projektu
+ * @param {int} userid identyfikator użytkownika
+ */
 function deleteUserFromProject(userid) {
     $(location).attr('href', 'home.html');
     $.ajax({
@@ -605,6 +720,11 @@ function deleteUserFromProject(userid) {
     });
 }
 
+/**
+ * Funkcja dodająca użytkownika do projektu
+ * @param {int} projectid identyfikator projektu
+ * @param {int} userid identyfikator użytkownika
+ */
 function addUserToProject(projectid, userid) {
     $("#AddUserMessage").attr("class", "fa fa-spinner w3-spin");
     $("#AddUserMessage").attr("style", "width:30px; height:30px; font-size:30px");
@@ -649,6 +769,9 @@ function addUserToProject(projectid, userid) {
     });
 }
 
+/**
+ * Funkcja pobierająca użytkowników projektu
+ */
 function getProjectUsers() {
     var url = server + '/projects/' + projects[project].id + '/users';
     $.ajax({
@@ -660,10 +783,14 @@ function getProjectUsers() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "<div style='overflow-y: scroll;'>";
+                html = "<div style='max-height: 230px; overflow-y: scroll;'>";
                 pusers = response;
                 for(var i=0; i < pusers.length; i++) {
-                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + pusers[i].login;
+                    var color = "#fff";
+                    if(i%2 == 1) {
+                        color = "#eee";
+                    }
+                    html += '<div class="w3-bar-item w3-border" style="width:100%;' + 'background-color:' + color + '">' + pusers[i].login;
                     console.log(projects[project]);
                     if(projects[project].isAdmin) {
                         console.log("tt");
@@ -692,6 +819,9 @@ function getProjectUsers() {
     }).done(function(){getAllUsers();});
 }
 
+/**
+ * Funkcja pobierająca administratorów projektu
+ */
 function getProjectAdmins() {
     var url = server + '/projects/' + projects[project].id + '/admins';
     $.ajax({
@@ -703,10 +833,14 @@ function getProjectAdmins() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "<div style='overflow-y: scroll'>";
+                html = "<div style='max-height: 230px; overflow-y: scroll'>";
                 admins = response;
                 for(var i=0; i < response.length; i++) {
-                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
+                    var color = "#fff";
+                    if(i%2 == 1) {
+                        color = "#eee";
+                    }
+                    html += '<div class="w3-bar-item w3-border" style="width:100%;' + 'background-color:' + color + '">' + 
                     response[i].login + "</div>";
                 }
                 if(projects[project].isAdmin){
@@ -730,6 +864,10 @@ function getProjectAdmins() {
     }).done(function(){getAllUsers();});
 }
 
+/**
+ * Funkcja akceptująca prośbę użytkownika o dołączenie do projektu
+ * @param {int} id identyfikator użytkownika
+ */
 function grantAccess(id) {
     $.ajax({
         url: server + "/requests/" + projects[project].id + "/" + id,
@@ -745,6 +883,10 @@ function grantAccess(id) {
     });
 }
 
+/**
+ * Funkcja odrzucająca prośbę użytkownika o dołączenie do projektu
+ * @param {int} id identyfikator użytkownika
+ */
 function declineAccess(id) {
     $.ajax({
         url: server + "/requests/" + projects[project].id + "/" + id,
@@ -758,6 +900,9 @@ function declineAccess(id) {
     });
 }
 
+/**
+ * Funkcja pobierająca użytkowników, którzy poprosili o dostęp
+ */
 function getProjectRequestors() {
     var url = server + '/requests/' + projects[project].id;
     $.ajax({
@@ -769,9 +914,13 @@ function getProjectRequestors() {
         dataType: 'json',
         statusCode: {
             200: function (response) {
-                html = "";
+                html = "<div style='max-height: 230px; overflow-y: scroll'>";
                 for(var i=0; i < response.length; i++) {
-                    html += '<div class="w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%">' + 
+                    var color = "#fff";
+                    if(i%2 == 1) {
+                        color = "#eee";
+                    }
+                    html += '<div class="w3-bar-item w3-border" style="width:100%;' + 'background-color:' + color + '">' +
                     response[i].login;
                     html += "<div id='declineAccess" + response[i].id + "' class='fa fa-close w3-right w3-btn' alt='decline' style='font-size:10px' \
                         onclick='declineAccess("+response[i].id+")'</div></div>";
@@ -796,6 +945,9 @@ function getProjectRequestors() {
     }).done(function(){getAllUsers();});
 }
 
+/**
+ * Funkcja pobierająca wszystkich użytkowników
+ */
 function getAllUsers() {
     $.ajax({
         url: server + "/users",
@@ -838,6 +990,10 @@ function getAllUsers() {
     });
 }
 
+/**
+ * Funkcja przekierowująca do widoku elementu po kliknięci na wiersz w tabeli
+ * @param {int} id identyfikator elementu
+ */
 function goToItem(id) {
     localStorage.setItem("project", project);
     localStorage.setItem("projectid", projects[project].id);
@@ -847,6 +1003,9 @@ function goToItem(id) {
     $(location).attr('href', 'item.html');
 }
 
+/**
+ * Funkcja filtrująca elementy pracy
+ */
 function filterWorkItems() {
     var input, filter, table, tr, td, i;
     input = document.getElementById("tblsearch");
@@ -866,6 +1025,9 @@ function filterWorkItems() {
     }
 }
 
+/**
+ * Funkcja pobierająca elementy pracy przypisane do projektu
+ */
 function getProjectItems() {
     $.ajax({
         url: server + "/items/" + projects[project].id,
@@ -910,6 +1072,10 @@ function getProjectItems() {
     });
 }
 
+/**
+ * Funkcja pobierająca i wyświetlająca informacje o projekcie
+ * @param {JSON} hrf obiekt projektu
+ */
 function getProjectData(hrf) {
     project = hrf.innerHTML;
     $('#hcontainer').attr('style', 'height:300px;');
@@ -927,15 +1093,22 @@ function getProjectData(hrf) {
     getProjectItems();
     if(projects[project].isAdmin) {
         getProjectRequestors();
-        $('#requestors').attr("style", "height:300px; overflow-y: scroll;");
-        $('#items').attr("style", "height:500px; width:100%;");
+        $('#requestors').attr("style", "height:300px;");
     }
     else {
-        $('#requestors').attr("style", "height:300px; display: none; overflow-y: scroll;");
+        $('#requestors').attr("style", "height:300px; width:0px; display: none;");
+		$('#requestors').attr("class", "");
+		$('#projcontent').removeClass("w3-quarter").addClass("w3-third");
+		$('#pusers').removeClass("w3-quarter").addClass("w3-third");
+		$('#admins').removeClass("w3-quarter").addClass("w3-third");
     }
+    $('#items').attr("style", "height:500px; width:100%; overflow-y: scroll;");
     navClose();
 }
 
+/**
+ * Funnkcja przekierowująca do strony, gdzie użytkownik utworzy nowy element pracy
+ */
 function newWorkItem() {
     localStorage.setItem("project", project);
     localStorage.setItem("projectid", projects[project].id);
@@ -944,6 +1117,9 @@ function newWorkItem() {
     $(location).attr('href', 'item.html');
 }
 
+/**
+ * Funkcja pobierająca projekty
+ */
 function getProjects() {
     projects = []
     var url = server + "/projects";
@@ -984,6 +1160,9 @@ function getProjects() {
     });
 }
 
+/**
+ * Funkcja tworząca projekt
+ */
 function createProject() {
     $("#projectLoading").attr("class", "fa fa-spinner w3-spin");
     $("#projectLoading").attr("style", "width:30px; height:30px; font-size:30px");
@@ -1008,7 +1187,12 @@ function createProject() {
             403: function (response) {
                 $('#projectLoading').attr('class', 'w3-red w3-center');
                 $("#projectLoading").attr("style", "font-size:16px");
-                $('#projectLoading').html("Error error:" + response);
+                $('#projectLoading').html("Error:" + response);
+            },
+            409: function (response) {
+                $('#projectLoading').attr('class', 'w3-red w3-center');
+                $("#projectLoading").attr("style", "font-size:16px");
+                $('#projectLoading').html("Such project already exists. Choose another name");
             },
             401: function (response) {
                 localStorage.clear();
@@ -1023,6 +1207,10 @@ function createProject() {
     });
 }
 
+/**
+ * Funkcja wyświetlająca opis projektu przy proszeniu o dostęp
+ * @param {int} id identyfikator projektu
+ */
 function showDesc(id) {
     var divid = "Desc" + id;
     var x = document.getElementById(divid);
@@ -1033,6 +1221,11 @@ function showDesc(id) {
     }
 }
 
+/**
+ * Funkcja wysyłająca prośbę o dostęp do projektu
+ * @param {int} id identifikator projektu
+ * @param {int} idx identyfikator przycisku
+ */
 function requestAccessToProject(id, idx) {
 
     $("#reqBtn"+idx).attr("class", "fa fa-spinner w3-spin");
@@ -1069,6 +1262,9 @@ function requestAccessToProject(id, idx) {
     });
 }
 
+/**
+ * Funkcja pobierająca projekty, o dostęp do których użytkownik może prosić
+ */
 function requestAccess() {
     document.getElementById('RequestAccessModal').style.display='block';
     $("#requestMessage").attr("class", "fa fa-spinner w3-spin");
@@ -1084,14 +1280,16 @@ function requestAccess() {
             200: function (response) {
                 $('#requestMessage').attr('class', 'w3-green w3-center');
                 $("#requestMessage").attr("style", "font-size:16px");
-                html = "";
+                html = "<div id='prReq'>";
+                var searchInput = '<input class="w3-input w3-padding" type="text" placeholder="Search.." id="SearchReq" onkeyup="filterProjectsRequests()">'
                 for(var i = 0; i < response.length; i++) {
-                    html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%" onclick=showDesc(' + i +')>' + response[i].title + "</button><br />";
+                    html += '<button class="w3-btn w3-bar-item w3-bar-block w3-card w3-light-grey" style="width:100%" onclick=showDesc(' + i +')>' + response[i].title + "</button>";
                     html += '<div id="Desc' + i + '" class="w3-container w3-row w3-hide"><div class="w3-threequarter">\
                                 <p>' + response[i].description + '</p>\
-                            </div><div id="reqbtn' + i + '" class="w3-btn w3-padding-16 w3-quarter w3-green" onclick="requestAccessToProject(' + response[i].id + ',' + i + ')">Request Access</div></div></div>';
+                            </div><div id="reqbtn' + i + '" class="w3-btn w3-padding-16 w3-quarter w3-green" onclick="requestAccessToProject(' + response[i].id + ',' + i + ')">Request Access</div></div>';
                 }
-                $('#projectsToRequest').html(html);
+                $('#projectsToRequest').html(searchInput + html + '</div>');
+                $('#projectsToRequest').attr("style", "max-height:500px; overflow-y:scroll;");
             },
             403: function (response) {
                 $('#requestMessage').attr('class', 'w3-red w3-center');
@@ -1111,6 +1309,9 @@ function requestAccess() {
     });
 }
 
+/**
+ * Funkcja dodająca nowe elementy pracy
+ */
 function addNewItem() {
     var projectid = document.forms["newItemForm"]["projectid"].value;
     var itemName = document.forms["newItemForm"]["itemName"].value;
@@ -1153,6 +1354,9 @@ function addNewItem() {
     });
 }
 
+/**
+ * Funkcja odblokowująca możliwość edycji elementu pracy
+ */
 function enableEditing() {
     $("#editbtn").attr('style', 'display: none');
     $("#itemTitle").prop('disabled', false);
@@ -1168,6 +1372,10 @@ function enableEditing() {
     $("#newcomment").attr("style", "height: 250px;");
 }
 
+/**
+ * Funkcja pobierająca komentarze do zadanego elementu pracy
+ * @param {int} id identyfikator elementu pracy
+ */
 function getComments(id) {
     $.ajax({
         url: server + "/items/" + id + "/comments",
@@ -1208,6 +1416,9 @@ function getComments(id) {
     });
 }
 
+/**
+ * Funkca aktualizująca element pracy
+ */
 function updateItem() {
     $("#savebtn").prop('disabled', true);
     $("#delbtn").prop('disabled', true);
@@ -1260,6 +1471,9 @@ function updateItem() {
     });
 }
 
+/**
+ * Funkcja usuwająca element pracy
+ */
 function deleteItem() {
     var itemid = document.forms["newItemForm"]["itemid"].value;
     console.log(itemid);
@@ -1275,6 +1489,9 @@ function deleteItem() {
     });
 }
 
+/**
+ * Funkcja dodająca komentarz
+ */
 function addComment() {
     var itemid = document.forms["newItemForm"]["itemid"].value;
     var txt = $("#textcmt").val();

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html>
 <head>
 
@@ -110,15 +110,15 @@
             </form>
             <button id="savebtn" class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addNewItem()">Save work item</button>
             <button id="delbtn" class="hidden" style="width: 200px; height: 40px; margin-right: 20px" onclick="document.getElementById('DeleteModal').style.display='block'">Delete this item</button>
-            
-            <div id="newcomment" style="height: 200px">
-                <b>Add new comment:</b>
-                <textarea cols="40" rows="5" style="height: 100px; width: 98%" type="text" placeholder="Enter comment" id="textcmt" name="cmt" required></textarea>
-                <button id="savebtn" class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addComment()">Add comment</button>
-            </div>
-            <b>Comments:</b>
-            <div id="comments" class="hidden">
-                
+            <div id="commentSection">
+                <div id="newcomment" style="height: 200px">
+                    <b>Add new comment:</b>
+                    <textarea cols="40" rows="5" style="height: 100px; width: 98%" type="text" placeholder="Enter comment" id="textcmt" name="cmt" required></textarea>
+                    <button id="savebtn" class="w3-btn w3-green w3-padding w3-right w3-margin-top" style="width: 200px; height: 40px; margin-right: 20px" onclick="addComment()">Add comment</button>
+                </div>
+                <b>Comments:</b>
+                <div id="comments" class="hidden">
+                </div>
             </div>
         </div>
     </div>
