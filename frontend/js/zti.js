@@ -1,5 +1,5 @@
 ﻿var token = null; //token autoryzacyjny
-var server = 'http://localhost:8080/trtrt'; //adres serwera z projektu
+var server = 'https://sk-project.eu-gb.mybluemix.net'; //adres serwera z projektu
 var username = null; //nazwa użytkownika
 var projects = []; //tablica projektów
 var pusers = []; //tablica użytkownikó
@@ -735,7 +735,6 @@ function addUserToProject(projectid, userid) {
             break;
         }
     }
-    console.log(usr);
     $.ajax({
         url: server + "/projects/" + projects[project].id + "/users",
         type: "POST",
@@ -1094,6 +1093,10 @@ function getProjectData(hrf) {
     if(projects[project].isAdmin) {
         getProjectRequestors();
         $('#requestors').attr("style", "height:300px;");
+        $('#requestors').attr("class", "w3-padding w3-light-grey w3-bar-block w3-border w3-border-green w3-quarter");
+        $('#projcontent').removeClass("w3-third").addClass("w3-quarter");
+		$('#pusers').removeClass("w3-third").addClass("w3-quarter");
+		$('#admins').removeClass("w3-third").addClass("w3-quarter");
     }
     else {
         $('#requestors').attr("style", "height:300px; width:0px; display: none;");
@@ -1398,10 +1401,7 @@ function getComments(id) {
                 }
                 $('#comments').html(html);
             },
-            403: function (response) {
-                $('#requestMessage').attr('class', 'w3-red w3-center');
-                $("#requestMessage").attr("style", "font-size:16px");
-                $('#requestMessage').html("Error error:" + response);
+            409: function (response) {
             },
             401: function (response) {
                 localStorage.clear();
@@ -1453,11 +1453,6 @@ function updateItem() {
             200: function (response) {
                 $(location).attr('href', 'home.html')
             },
-            403: function (response) {
-                $("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
-                $("#reqBtn"+idx).html("An error occured.");
-                $('#requestMessage').html("Error error:" + response);
-            },
             401: function (response) {
                 localStorage.clear();
                 localStorage.setItem("error", response.status + ": " + response.responseText);
@@ -1466,7 +1461,6 @@ function updateItem() {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            //handleError(xhr, status, error, "requestMessage");
         }
     });
 }
@@ -1510,11 +1504,6 @@ function addComment() {
             200: function (response) {
                 $(location).attr('href', 'home.html')
             },
-            403: function (response) {
-                /*$("#reqBtn"+idx).attr('class', 'w3-btn w3-padding-16 w3-red w3-center');
-                $("#reqBtn"+idx).html("An error occured.");
-                $('#requestMessage').html("Error error:" + response);*/
-            },
             401: function (response) {
                 localStorage.clear();
                 localStorage.setItem("error", response.status + ": " + response.responseText);
@@ -1523,7 +1512,6 @@ function addComment() {
         }, success: function () {
         },
         error: function(xhr, status, error) {
-            //handleError(xhr, status, error, "requestMessage");
         }
     });
 }
